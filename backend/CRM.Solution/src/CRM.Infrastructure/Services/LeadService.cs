@@ -36,6 +36,18 @@ namespace CRM.Infrastructure.Services
             return leads.Select(MapToDto).ToList();
         }
 
+        public async Task<IReadOnlyList<LeadDto>> GetPagedLeadsByUserAsync(Guid userId, int pageNumber, int pageSize)
+        {
+            // Issue #3 FIX: Sirf is user ko assigned leads return karo
+            var all = await _leadRepository.FindAsync(l => l.AssignedToUserId == userId);
+            return all
+                .OrderByDescending(l => l.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(MapToDto)
+                .ToList();
+        }
+
         public async Task<LeadDto> CreateLeadAsync(CreateLeadDto createDto)
         {
             var lead = new Lead

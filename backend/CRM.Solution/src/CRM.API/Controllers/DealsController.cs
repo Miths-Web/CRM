@@ -3,6 +3,7 @@ using CRM.Application.Features.Deals.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace CRM.API.Controllers
@@ -19,11 +20,33 @@ namespace CRM.API.Controllers
             _dealService = dealService;
         }
 
+        /// <summary>
+        /// GET /api/deals — Role-aware:
+        /// Admin/Manager = sabke deals | Sales Rep = sirf apne assigned deals
+        /// Issue #3 FIX: Permission matrix enforce kiya
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var deals = await _dealService.GetPagedDealsAsync(pageNumber, pageSize);
-            return Ok(deals);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid.TryParse(userIdStr, out var userId);
+
+            // Admin aur Manager sabke deals dekh sakte hain
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                var allDeals = await _dealService.GetPagedDealsAsync(pageNumber, pageSize);
+                return Ok(allDeals);
+            }
+
+            // Sales Rep sirf apne assigned deals dekhe
+            if (User.IsInRole("Sales Rep"))
+            {
+                if (userId == Guid.Empty) return Unauthorized();
+                var myDeals = await _dealService.GetPagedDealsByUserAsync(userId, pageNumber, pageSize);
+                return Ok(myDeals);
+            }
+
+            return Ok(Array.Empty<object>());
         }
 
         [HttpGet("{id:guid}")]
@@ -31,6 +54,16 @@ namespace CRM.API.Controllers
         {
             var deal = await _dealService.GetDealByIdAsync(id);
             if (deal == null) return NotFound();
+
+            // Sales Rep sirf apna deal dekhe
+            if (User.IsInRole("Sales Rep"))
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid.TryParse(userIdStr, out var userId);
+                if (deal.AssignedToUserId != userId)
+                    return Forbid();
+            }
+
             return Ok(deal);
         }
 
@@ -38,6 +71,14 @@ namespace CRM.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateDealDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // Sales Rep ka deal automatically unhe assign ho
+            if (User.IsInRole("Sales Rep") && model.AssignedToUserId == null)
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (Guid.TryParse(userIdStr, out var userId))
+                    model.AssignedToUserId = userId;
+            }
 
             var createdDeal = await _dealService.CreateDealAsync(model);
             return CreatedAtAction(nameof(GetById), new { id = createdDeal.Id }, createdDeal);
@@ -47,6 +88,17 @@ namespace CRM.API.Controllers
         public async Task<IActionResult> Update(Guid id, [FromBody] CreateDealDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // Sales Rep sirf apna deal update kare
+            if (User.IsInRole("Sales Rep"))
+            {
+                var existing = await _dealService.GetDealByIdAsync(id);
+                if (existing == null) return NotFound();
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid.TryParse(userIdStr, out var userId);
+                if (existing.AssignedToUserId != userId)
+                    return Forbid();
+            }
 
             try
             {

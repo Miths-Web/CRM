@@ -1,4 +1,4 @@
-﻿using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Features.Deals.DTOs;
 using CRM.Domain.Entities;
@@ -28,6 +28,18 @@ namespace CRM.Infrastructure.Services
         {
             var deals = await _dealRepository.GetPagedDealsWithIncludesAsync(pageNumber, pageSize);
             return deals.Select(MapToDto).ToList();
+        }
+
+        public async Task<IReadOnlyList<DealDto>> GetPagedDealsByUserAsync(Guid userId, int pageNumber, int pageSize)
+        {
+            // Issue #3 FIX: Sirf is user ko assigned deals return karo
+            var all = await _dealRepository.FindAsync(d => d.AssignedToUserId == userId);
+            return all
+                .OrderByDescending(d => d.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(MapToDto)
+                .ToList();
         }
 
         public async Task<DealDto> CreateDealAsync(CreateDealDto createDto)

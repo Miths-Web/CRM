@@ -20,11 +20,34 @@ namespace CRM.API.Controllers
             _leadService = leadService;
         }
 
+        /// <summary>
+        /// GET /api/leads — Role-aware:
+        /// Admin/Manager = sabke leads | Sales Rep = sirf apne assigned leads | Support/Viewer = empty list
+        /// Issue #3 FIX: Permission matrix enforce kiya
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var leads = await _leadService.GetPagedLeadsAsync(pageNumber, pageSize);
-            return Ok(leads);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid.TryParse(userIdStr, out var userId);
+
+            // Admin aur Manager sabke leads dekh sakte hain
+            if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+            {
+                var allLeads = await _leadService.GetPagedLeadsAsync(pageNumber, pageSize);
+                return Ok(allLeads);
+            }
+
+            // Sales Rep sirf apne assigned leads dekhe
+            if (User.IsInRole("Sales Rep"))
+            {
+                if (userId == Guid.Empty) return Unauthorized();
+                var myLeads = await _leadService.GetPagedLeadsByUserAsync(userId, pageNumber, pageSize);
+                return Ok(myLeads);
+            }
+
+            // Support Agent aur Viewer ke liye leads nahi (pehle se route guard hai, extra safety)
+            return Ok(Array.Empty<object>());
         }
 
         [HttpGet("{id:guid}")]
@@ -32,6 +55,16 @@ namespace CRM.API.Controllers
         {
             var lead = await _leadService.GetLeadByIdAsync(id);
             if (lead == null) return NotFound();
+
+            // Sales Rep sirf apna lead dekhe
+            if (User.IsInRole("Sales Rep"))
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid.TryParse(userIdStr, out var userId);
+                if (lead.AssignedToUserId != userId)
+                    return Forbid();
+            }
+
             return Ok(lead);
         }
 
@@ -40,14 +73,33 @@ namespace CRM.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            // Sales Rep apna userId automatically assign ho
+            if (User.IsInRole("Sales Rep") && model.AssignedToUserId == null)
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (Guid.TryParse(userIdStr, out var userId))
+                    model.AssignedToUserId = userId;
+            }
+
             var createdLead = await _leadService.CreateLeadAsync(model);
             return CreatedAtAction(nameof(GetById), new { id = createdLead.Id }, createdLead);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLeadDto model)  // BUG-011 FIX
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLeadDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // Sales Rep sirf apna lead update kare
+            if (User.IsInRole("Sales Rep"))
+            {
+                var existing = await _leadService.GetLeadByIdAsync(id);
+                if (existing == null) return NotFound();
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid.TryParse(userIdStr, out var userId);
+                if (existing.AssignedToUserId != userId)
+                    return Forbid();
+            }
 
             try
             {
@@ -69,6 +121,7 @@ namespace CRM.API.Controllers
         }
 
         [HttpPost("{id:guid}/convert")]
+        [Authorize(Roles = "Admin,Manager,Sales Rep")]
         public async Task<IActionResult> ConvertLead(Guid id)
         {
             try
