@@ -19,10 +19,10 @@ interface NavItem {
       <!-- ─── Sidebar ─── -->
       <aside class="sidebar">
         <div class="sidebar-header">
-          <a routerLink="/dashboard" class="logo" *ngIf="!collapsed()" style="cursor: pointer;">
+          <a (click)="reloadPage()" class="logo" *ngIf="!collapsed()" style="cursor: pointer;">
             <img src="logo.png" alt="Dhwiti CRM" class="main-logo-img" />
           </a>
-          <a routerLink="/dashboard" class="logo-icon-only flex-center" *ngIf="collapsed()" style="cursor: pointer;">
+          <a (click)="reloadPage()" class="logo-icon-only flex-center" *ngIf="collapsed()" style="cursor: pointer;">
             <img src="logo.png" alt="D" class="collapsed-logo-img" />
           </a>
           <button class="collapse-btn flex-center" (click)="collapsed.set(!collapsed())">
@@ -287,6 +287,11 @@ export class ShellComponent {
   readonly Bell = Bell;
 
   constructor(private auth: AuthService, private router: Router) { }
+
+  // ── Reload Current Page ────────────────────────────────────────
+  reloadPage() {
+    window.location.reload();
+  }
 
   // ── Role-based nav filtering ───────────────────────────────────
   canSeeItem(item: any): boolean {
