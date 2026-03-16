@@ -16,7 +16,7 @@ import {
     <div class="animate-fadeIn page-container">
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Package" class="inline-icon"></lucide-icon> Products & Services</h2>
+          <h2 class="page-title">Products & Services</h2>
           <p class="page-subtitle">Manage your catalog, pricing, and tax rates.</p>
         </div>
         <div class="flex gap-3">

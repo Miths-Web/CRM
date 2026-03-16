@@ -14,7 +14,7 @@ import {
     <div class="animate-fadeIn page-container">
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="CreditCard" class="inline-icon"></lucide-icon> Payments History</h2>
+          <h2 class="page-title">Payments History</h2>
           <p class="page-subtitle">A global log of all recorded payments received.</p>
         </div>
       </div>

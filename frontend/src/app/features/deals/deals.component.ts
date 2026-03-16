@@ -16,7 +16,7 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="CircleDollarSign" class="inline-icon"></lucide-icon> Deals Pipeline</h2>
+          <h2 class="page-title">Deals Pipeline</h2>
           <p class="page-subtitle">Total pipeline: ₹{{totalPipeline() | number:'1.0-0'}}</p>
         </div>
         <div class="flex gap-2">
@@ -156,7 +156,7 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
             <label class="form-label">Description</label>
             <textarea formControlName="description" class="form-control" rows="2"></textarea>
           </div>
-          <div *ngIf="error()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{error()}}</div>
+          <div *ngIf="error()" class="form-error mt-4">{{error()}}</div>
         </form>
         <div modal-footer>
           <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>

@@ -17,7 +17,7 @@ interface CalendarDay { date: Date; isCurrentMonth: boolean; isToday: boolean; e
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="CalendarIcon" class="inline-icon"></lucide-icon> Calendar</h2>
+          <h2 class="page-title">Calendar</h2>
           <p class="page-subtitle">Schedule and manage your events</p>
         </div>
         <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> New Event</button>

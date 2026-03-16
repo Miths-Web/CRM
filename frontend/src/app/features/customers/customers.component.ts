@@ -19,7 +19,7 @@ import {
       <!-- Header -->
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="UserCheck" class="inline-icon"></lucide-icon> Customers</h2>
+          <h2 class="page-title">Customers</h2>
           <p class="page-subtitle">Manage business contacts and their professional details.</p>
         </div>
         <div class="flex gap-3">

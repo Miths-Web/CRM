@@ -15,7 +15,7 @@ import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Target" class="inline-icon"></lucide-icon> Leads</h2>
+          <h2 class="page-title">Leads</h2>
           <p class="page-subtitle">Track and convert your leads into customers</p>
         </div>
         <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> Add Lead</button>
@@ -121,7 +121,7 @@ import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from
             <label class="form-label">Notes / Description</label>
             <textarea formControlName="description" class="form-control" rows="3" placeholder="Any additional notes..."></textarea>
           </div>
-          <div *ngIf="error()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{error()}}</div>
+          <div *ngIf="error()" class="form-error mt-4">{{error()}}</div>
         </form>
         <div modal-footer>
           <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>

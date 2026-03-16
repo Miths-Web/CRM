@@ -36,7 +36,7 @@ import { LucideAngularModule, MessageSquare, RefreshCw, Hash, Wifi, WifiOff, Sen
       <!-- Main Chat Window -->
       <div class="chat-main">
         <div class="chat-header" *ngIf="selectedRoom()">
-          <div class="chat-room-title flex items-center gap-1"><lucide-icon [img]="Hash" class="inline-icon"></lucide-icon> {{selectedRoom()?.name}}</div>
+          <div class="chat-room-title flex items-center gap-1">{{selectedRoom()?.name}}</div>
           <div class="chat-status flex-center" [class.connected]="connected()">
             <lucide-icon [img]="connected() ? Wifi : WifiOff" class="w-3 h-3 mr-1" style="margin-right:0.25rem"></lucide-icon>
             {{connected() ? 'Connected' : 'Connecting...'}}

@@ -11,7 +11,7 @@ import { LucideAngularModule, BarChart2, RefreshCw, CircleDollarSign, Target } f
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="BarChart2" class="inline-icon"></lucide-icon> Reports & Analytics</h2>
+          <h2 class="page-title">Reports & Analytics</h2>
           <p class="page-subtitle">Business insights and performance metrics</p>
         </div>
         <div class="flex gap-2">
@@ -46,7 +46,7 @@ import { LucideAngularModule, BarChart2, RefreshCw, CircleDollarSign, Target } f
         <div class="reports-grid">
           <div class="card" *ngIf="salesReport()">
             <div class="flex-between mb-4">
-              <h3><lucide-icon [img]="CircleDollarSign" class="inline-icon"></lucide-icon> Monthly Sales ({{currentYear}})</h3>
+              <h3>Monthly Sales ({{currentYear}})</h3>
               <div class="flex gap-2">
                 <button class="btn btn-secondary btn-sm" (click)="currentYear = currentYear - 1; loadSales()">‹ {{currentYear - 1}}</button>
                 <button class="btn btn-secondary btn-sm" (click)="currentYear = currentYear + 1; loadSales()">{{currentYear + 1}} ›</button>
@@ -81,7 +81,7 @@ import { LucideAngularModule, BarChart2, RefreshCw, CircleDollarSign, Target } f
 
           <!-- Lead Report -->
           <div class="card" *ngIf="leadReport()">
-            <h3 class="mb-4"><lucide-icon [img]="Target" class="inline-icon"></lucide-icon> Lead Analysis</h3>
+            <h3 class="mb-4">Lead Analysis</h3>
             <div class="lead-sections">
               <div class="lead-section">
                 <h4 style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.75rem">By Status</h4>

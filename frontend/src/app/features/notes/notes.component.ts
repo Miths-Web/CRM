@@ -15,7 +15,7 @@ import { LucideAngularModule, FileText, Plus, Pin, Trash2 } from 'lucide-angular
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="FileText" class="inline-icon"></lucide-icon> Notes</h2>
+          <h2 class="page-title">Notes</h2>
           <p class="page-subtitle">Your personal notes and memos</p>
         </div>
         <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> New Note</button>

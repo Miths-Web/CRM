@@ -16,7 +16,7 @@ import { LucideAngularModule, Video, Plus, Radio, Link, Calendar } from 'lucide-
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Video" class="inline-icon"></lucide-icon> Meetings</h2>
+          <h2 class="page-title">Meetings</h2>
           <p class="page-subtitle">Video meetings powered by Jitsi — no installs needed</p>
         </div>
         <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> Schedule Meeting</button>

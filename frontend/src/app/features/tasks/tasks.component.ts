@@ -15,7 +15,7 @@ import { LucideAngularModule, CheckSquare, Plus, RefreshCw, AlertTriangle, Check
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="CheckSquare" class="inline-icon"></lucide-icon> Tasks</h2>
+          <h2 class="page-title">Tasks</h2>
           <p class="page-subtitle">
             <span class="badge badge-red" *ngIf="overdueTasks().length > 0">{{overdueTasks().length}} overdue</span>
             Track your work and stay on schedule
@@ -67,7 +67,7 @@ import { LucideAngularModule, CheckSquare, Plus, RefreshCw, AlertTriangle, Check
               </select>
             </div>
           </div>
-          <div *ngIf="error()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{error()}}</div>
+          <div *ngIf="error()" class="form-error mt-4">{{error()}}</div>
         </form>
         <div modal-footer>
           <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>

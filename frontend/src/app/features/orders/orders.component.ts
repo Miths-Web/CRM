@@ -19,7 +19,7 @@ import {
     <div class="animate-fadeIn page-container">
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="ShoppingCart" class="inline-icon"></lucide-icon> Orders</h2>
+          <h2 class="page-title">Orders</h2>
           <p class="page-subtitle">Track and manage customer purchase orders.</p>
         </div>
         <div class="flex gap-3">

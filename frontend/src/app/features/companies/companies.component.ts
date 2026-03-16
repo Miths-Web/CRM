@@ -17,7 +17,7 @@ import {
       <!-- Header -->
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Building2" class="inline-icon"></lucide-icon> Companies</h2>
+          <h2 class="page-title">Companies</h2>
           <p class="page-subtitle">Manage your B2B clients and their details.</p>
         </div>
         <div class="flex gap-3">

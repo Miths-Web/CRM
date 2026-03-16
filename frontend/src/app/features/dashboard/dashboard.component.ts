@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReportService, DashboardData } from '../reports/services/report.service';
@@ -15,7 +15,7 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
       <!-- Header -->
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="LayoutDashboard" class="inline-icon"></lucide-icon> Dashboard</h2>
+          <h2 class="page-title">Dashboard</h2>
           <p class="page-subtitle">Welcome back! Here's your business overview.</p>
         </div>
         <div class="flex gap-2">
@@ -80,7 +80,7 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
           <!-- Top Deals -->
           <div class="card">
             <div class="flex-between mb-4">
-              <h3><lucide-icon [img]="Flame" class="inline-icon"></lucide-icon> Top Open Deals</h3>
+              <h3>Top Open Deals</h3>
               <a routerLink="/deals" class="btn btn-secondary btn-sm">View All →</a>
             </div>
             <div class="deal-list" *ngIf="data()!.topDeals?.length; else noDeals">
@@ -102,7 +102,7 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
 
           <!-- Quick Stats -->
           <div class="card">
-            <h3 class="mb-4"><lucide-icon [img]="BarChart2" class="inline-icon"></lucide-icon> Quick Stats</h3>
+            <h3 class="mb-4">Quick Stats</h3>
             <div class="quick-stat-list">
               <div class="quick-stat">
                 <span class="text-muted">Avg. Deal Size</span>

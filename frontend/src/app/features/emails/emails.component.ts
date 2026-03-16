@@ -14,7 +14,7 @@ import { LucideAngularModule, Mail, Send, RefreshCw, AlertTriangle, CheckCircle2
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Mail" class="inline-icon"></lucide-icon> Emails</h2>
+          <h2 class="page-title">Emails</h2>
           <p class="page-subtitle">Send and track your CRM emails via SendGrid</p>
         </div>
         <button class="btn btn-primary" (click)="showCompose.set(true)"><lucide-icon [img]="Send" class="btn-icon-sm"></lucide-icon> Compose Email</button>
@@ -60,8 +60,8 @@ import { LucideAngularModule, Mail, Send, RefreshCw, AlertTriangle, CheckCircle2
             <label class="form-label">Schedule Send (Optional)</label>
             <input type="datetime-local" formControlName="scheduledAt" class="form-control" />
           </div>
-          <div *ngIf="error()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{error()}}</div>
-          <div *ngIf="success()" class="form-success mt-4"><lucide-icon [img]="CheckCircle2" class="inline-icon"></lucide-icon> {{success()}}</div>
+          <div *ngIf="error()" class="form-error mt-4">{{error()}}</div>
+          <div *ngIf="success()" class="form-success mt-4">{{success()}}</div>
         </form>
         <div modal-footer>
           <button class="btn btn-secondary" (click)="showCompose.set(false)">Cancel</button>

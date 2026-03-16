@@ -16,7 +16,7 @@ import {
     <div class="animate-fadeIn page-container">
       <div class="glass-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Receipt" class="inline-icon"></lucide-icon> Invoices</h2>
+          <h2 class="page-title">Invoices</h2>
           <p class="page-subtitle">Manage billing, collect payments, and track receivables.</p>
         </div>
         <div class="flex gap-3">

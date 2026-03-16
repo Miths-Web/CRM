@@ -14,7 +14,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
     <div class="animate-fadeIn">
       <div class="page-header">
         <div>
-          <h2 class="page-title"><lucide-icon [img]="Settings" class="inline-icon"></lucide-icon> Settings</h2>
+          <h2 class="page-title">Settings</h2>
           <p class="page-subtitle">Manage system configuration and user accounts</p>
         </div>
       </div>
@@ -29,7 +29,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
       <!-- Profile Tab -->
       <div *ngIf="activeTab()==='profile'" class="settings-section animate-fadeIn">
         <div class="card settings-card">
-          <h3 class="settings-title"><lucide-icon [img]="User" class="inline-icon"></lucide-icon> My Profile</h3>
+          <h3 class="settings-title">My Profile</h3>
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
             <div class="profile-avatar-section">
               <div class="avatar avatar-lg">{{userInitials()}}</div>
@@ -68,7 +68,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
                 <input formControlName="jobTitle" class="form-control" />
               </div>
             </div>
-            <div *ngIf="profileSuccess()" class="form-success mt-4"><lucide-icon [img]="CheckCircle2" class="inline-icon"></lucide-icon> Profile updated successfully!</div>
+            <div *ngIf="profileSuccess()" class="form-success mt-4">Profile updated successfully!</div>
             <div class="mt-4">
               <button type="submit" class="btn btn-primary" [disabled]="savingProfile()">
                 {{savingProfile() ? 'Saving...' : 'Save Profile'}}
@@ -78,7 +78,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
         </div>
 
         <div class="card settings-card">
-          <h3 class="settings-title"><lucide-icon [img]="Lock" class="inline-icon"></lucide-icon> Change Password</h3>
+          <h3 class="settings-title">Change Password</h3>
           <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
             <div class="form-group">
               <label class="form-label">Current Password</label>
@@ -94,8 +94,8 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
                 <input type="password" formControlName="confirmPassword" class="form-control" />
               </div>
             </div>
-            <div *ngIf="pwError()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{pwError()}}</div>
-            <div *ngIf="pwSuccess()" class="form-success mt-4"><lucide-icon [img]="CheckCircle2" class="inline-icon"></lucide-icon> Password changed!</div>
+            <div *ngIf="pwError()" class="form-error mt-4">{{pwError()}}</div>
+            <div *ngIf="pwSuccess()" class="form-success mt-4">Password changed!</div>
             <div class="mt-4">
               <button type="submit" class="btn btn-primary" [disabled]="passwordForm.invalid">Change Password</button>
             </div>
@@ -107,7 +107,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
       <div *ngIf="activeTab()==='users'" class="settings-section animate-fadeIn">
         <div class="card settings-card">
           <div class="flex-between mb-4">
-            <h3 class="settings-title"><lucide-icon [img]="Users" class="inline-icon"></lucide-icon> User Management</h3>
+            <h3 class="settings-title">User Management</h3>
             <button class="btn btn-primary btn-sm" (click)="showAddUser.set(!showAddUser())">
               <lucide-icon [img]="showAddUser() ? X : UserPlus" class="btn-icon-sm"></lucide-icon>
               {{showAddUser() ? 'Cancel' : 'Add User'}}
@@ -145,7 +145,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
                 <option value="Admin">Admin</option>
               </select>
             </div>
-            <div *ngIf="userError()" class="form-error mt-4"><lucide-icon [img]="AlertTriangle" class="inline-icon"></lucide-icon> {{userError()}}</div>
+            <div *ngIf="userError()" class="form-error mt-4">{{userError()}}</div>
             <div class="mt-4">
               <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid || creatingUser()">
                 {{creatingUser() ? 'Creating...' : 'Create User'}}
@@ -178,7 +178,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
       <!-- System Tab -->
       <div *ngIf="activeTab()==='system'" class="settings-section animate-fadeIn">
         <div class="card settings-card">
-          <h3 class="settings-title"><lucide-icon [img]="Building2" class="inline-icon"></lucide-icon> Company Settings</h3>
+          <h3 class="settings-title">Company Settings</h3>
           <form [formGroup]="systemForm" (ngSubmit)="saveSystem()">
             <div class="form-group">
               <label class="form-label">Company Name</label>
@@ -197,7 +197,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
                 <option value="Europe/London">GMT — London</option>
               </select>
             </div>
-            <div *ngIf="systemSuccess()" class="form-success mt-4"><lucide-icon [img]="CheckCircle2" class="inline-icon"></lucide-icon> Settings saved!</div>
+            <div *ngIf="systemSuccess()" class="form-success mt-4">Settings saved!</div>
             <div class="mt-4">
               <button type="submit" class="btn btn-primary">Save Settings</button>
             </div>
@@ -205,7 +205,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
         </div>
 
         <div class="card settings-card">
-          <h3 class="settings-title"><lucide-icon [img]="Monitor" class="inline-icon"></lucide-icon> System Info</h3>
+          <h3 class="settings-title">System Info</h3>
           <div class="info-grid">
             <div class="info-item"><span class="text-muted">App Version</span><strong>1.0.0</strong></div>
             <div class="info-item"><span class="text-muted">App Name</span><strong>Dhwiti CRM</strong></div>
@@ -219,7 +219,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
       <!-- Admin Tools Tab -->
       <div *ngIf="activeTab()==='admin'" class="settings-section animate-fadeIn">
         <div class="card settings-card">
-          <h3 class="settings-title"><lucide-icon [img]="Database" class="inline-icon"></lucide-icon> Admin Tools</h3>
+          <h3 class="settings-title">Admin Tools</h3>
           <p class="text-muted text-sm mb-4">Use these tools to populate or reset all CRM data. Only visible to Admins.</p>
 
           <!-- Seed Demo Data -->
