@@ -13,13 +13,14 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
     <div class="animate-fadeIn">
 
       <!-- Header -->
-      <div class="page-header">
+      <div class="page-header" style="align-items: flex-end;">
         <div>
-          <h2 class="page-title">Dashboard</h2>
-          <p class="page-subtitle">Welcome back! Here's your business overview.</p>
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem;">Business Overview</div>
+          <h2 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px;">Welcome back! 👋</h2>
+          <p class="text-muted text-sm mt-1">Here's what's happening with your pipeline today.</p>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-secondary btn-sm" (click)="load()"><lucide-icon [img]="RefreshCw" class="btn-icon-sm"></lucide-icon> Refresh</button>
+          <button class="btn btn-secondary btn-sm shadow-sm" (click)="load()"><lucide-icon [img]="RefreshCw" class="btn-icon-sm"></lucide-icon> Refresh Data</button>
         </div>
       </div>
 
