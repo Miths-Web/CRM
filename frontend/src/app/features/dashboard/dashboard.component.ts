@@ -1,14 +1,16 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ReportService, DashboardData } from '../reports/services/report.service';
+import { ReportService, DashboardData, SalesReport } from '../reports/services/report.service';
+import { AuthService } from '../../core/services/auth.service';
+import { BaseChartDirective } from 'ng2-charts';
 
 import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleDollarSign, CheckSquare, TrendingUp, Rocket, Trophy, AlertTriangle, Flame, Plus, Mail, Video, BarChart2 } from 'lucide-angular';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, LucideAngularModule],
+  imports: [CommonModule, RouterLink, LucideAngularModule, BaseChartDirective],
   template: `
     <div class="animate-fadeIn">
 
@@ -76,7 +78,27 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
           </div>
         </div>
 
-        <!-- Bottom Grid -->
+        <!-- Admin/Manager Charts Section -->
+        <div class="card mb-4" *ngIf="isAdminOrManager()">
+          <div class="flex-between mb-4">
+            <h3>Revenue Growth (This Year)</h3>
+            <span class="badge badge-purple">{{salesData()?.period || '—'}}</span>
+          </div>
+          <div style="height: 300px; width: 100%; position: relative;" *ngIf="monthlyRevenueChartData.labels.length > 0; else noSalesData">
+             <canvas baseChart
+              [data]="monthlyRevenueChartData"
+              [options]="barChartOptions"
+              [type]="'bar'">
+            </canvas>
+          </div>
+          <ng-template #noSalesData>
+            <div class="flex-center text-muted" style="height: 300px;">
+              No sales data available for this year yet.
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Bottom Grid 2 Columns -->
         <div class="dashboard-grid">
           <!-- Top Deals -->
           <div class="card">
@@ -101,9 +123,16 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
             </ng-template>
           </div>
 
-          <!-- Quick Stats -->
+          <!-- Quick Actions / Quick Stats -->
           <div class="card">
-            <h3 class="mb-4">Quick Stats</h3>
+            <h3 class="mb-4">Quick Links & Stats</h3>
+            <div class="quick-links-grid mb-6">
+              <a routerLink="/customers" class="quick-link"><lucide-icon [img]="Plus" class="quick-link-icon"></lucide-icon> New Customer</a>
+              <a routerLink="/deals" class="quick-link"><lucide-icon [img]="CircleDollarSign" class="quick-link-icon"></lucide-icon> New Deal</a>
+              <a routerLink="/tasks" class="quick-link"><lucide-icon [img]="CheckSquare" class="quick-link-icon"></lucide-icon> New Task</a>
+              <a routerLink="/emails" class="quick-link"><lucide-icon [img]="Mail" class="quick-link-icon"></lucide-icon> Send Email</a>
+            </div>
+
             <div class="quick-stat-list">
               <div class="quick-stat">
                 <span class="text-muted">Avg. Deal Size</span>
@@ -116,22 +145,6 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
               <div class="quick-stat">
                 <span class="text-muted">Upcoming Events</span>
                 <strong>{{data()!.upcomingEvents}}</strong>
-              </div>
-              <div class="quick-stat">
-                <span class="text-muted">Overdue Tasks</span>
-                <strong [class.text-danger]="data()!.overdueTasks > 0">{{data()!.overdueTasks}}</strong>
-              </div>
-            </div>
-
-            <div class="quick-links mt-6">
-              <h4 class="mb-2" style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Quick Actions</h4>
-              <div class="quick-links-grid">
-                <a routerLink="/customers" class="quick-link"><lucide-icon [img]="Plus" class="quick-link-icon"></lucide-icon> New Customer</a>
-                <a routerLink="/leads" class="quick-link"><lucide-icon [img]="Target" class="quick-link-icon"></lucide-icon> New Lead</a>
-                <a routerLink="/deals" class="quick-link"><lucide-icon [img]="CircleDollarSign" class="quick-link-icon"></lucide-icon> New Deal</a>
-                <a routerLink="/tasks" class="quick-link"><lucide-icon [img]="CheckSquare" class="quick-link-icon"></lucide-icon> New Task</a>
-                <a routerLink="/emails" class="quick-link"><lucide-icon [img]="Mail" class="quick-link-icon"></lucide-icon> Send Email</a>
-                <a routerLink="/meetings" class="quick-link"><lucide-icon [img]="Video" class="quick-link-icon"></lucide-icon> New Meeting</a>
               </div>
             </div>
           </div>
@@ -178,6 +191,8 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
 export class DashboardComponent implements OnInit {
   loading = signal(true);
   data = signal<DashboardData | null>(null);
+  salesData = signal<SalesReport | null>(null);
+  isAdminOrManager = signal(false);
 
   readonly LayoutDashboard = LayoutDashboard;
   readonly RefreshCw = RefreshCw;
@@ -195,15 +210,61 @@ export class DashboardComponent implements OnInit {
   readonly Video = Video;
   readonly BarChart2 = BarChart2;
 
-  constructor(private reportService: ReportService) { }
+  // Chart configuration
+  public barChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  };
+  
+  public monthlyRevenueChartData: any = { labels: [], datasets: [] };
+  
+  constructor(
+    private reportService: ReportService,
+    private authService: AuthService
+  ) { }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { 
+    this.isAdminOrManager.set(this.authService.isManager());
+    this.load(); 
+  }
 
   load() {
     this.loading.set(true);
+    
+    // Load general KPI Dashboard
     this.reportService.getDashboard().subscribe({
-      next: (d) => { this.data.set(d); this.loading.set(false); },
+      next: (d) => { 
+        this.data.set(d); 
+        this.loading.set(false); 
+      },
       error: () => { this.loading.set(false); }
     });
+
+    // If Admin/Manager, load monthly sales chart data
+    if (this.isAdminOrManager()) {
+      this.reportService.getSalesReport().subscribe(res => {
+        this.salesData.set(res);
+        if (res.monthlyBreakdown) {
+          this.monthlyRevenueChartData = {
+            labels: res.monthlyBreakdown.map(m => m.month.substring(0, 3)),
+            datasets: [{
+              label: 'Revenue (₹)',
+              data: res.monthlyBreakdown.map(m => m.revenue),
+              backgroundColor: 'rgba(59, 130, 246, 0.6)',
+              borderColor: 'rgba(59, 130, 246, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          };
+        }
+      });
+    }
   }
 }
+
