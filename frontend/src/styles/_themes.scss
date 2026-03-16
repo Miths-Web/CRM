@@ -1,0 +1,40 @@
+// ─── Dark Purple Theme (Default) ─────────────────────────────
+[data-theme="dark"],
+:root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #161627;
+    --bg-card: #1e1e35;
+    --bg-hover: #252540;
+    --accent: #7c3aed;
+    --accent-light: #9d65ff;
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(124, 58, 237, 0.4);
+}
+
+// ─── Light Theme (Future) ────────────────────────────────────
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5f9;
+    --accent: #7c3aed;
+    --accent-light: #6d28d9;
+    --accent-glow: rgba(124, 58, 237, 0.2);
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #2563eb;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border: rgba(0, 0, 0, 0.1);
+    --border-accent: rgba(124, 58, 237, 0.3);
+}

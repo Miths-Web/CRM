@@ -1,0 +1,49 @@
+// ─── CSS Variables ───────────────────────────────────────────
+$accent: #7c3aed;
+$accent-light: #9d65ff;
+$bg-primary: #0f0f1a;
+$bg-secondary: #161627;
+$bg-card: #1e1e35;
+$success: #10b981;
+$warning: #f59e0b;
+$danger: #ef4444;
+$text-primary: #f1f5f9;
+$text-secondary: #94a3b8;
+$text-muted: #64748b;
+$border: rgba(255, 255, 255, 0.08);
+
+// ─── Breakpoints ─────────────────────────────────────────────
+$bp-sm: 576px;
+$bp-md: 768px;
+$bp-lg: 992px;
+$bp-xl: 1200px;
+$bp-xxl: 1400px;
+
+// ─── Spacing Scale ────────────────────────────────────────────
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-6: 1.5rem;
+$space-8: 2rem;
+
+// ─── Border Radius ────────────────────────────────────────────
+$radius-sm: 6px;
+$radius-md: 12px;
+$radius-lg: 20px;
+$radius-xl: 28px;
+
+// ─── Transitions ──────────────────────────────────────────────
+$transition-fast: all 0.15s ease;
+$transition-normal: all 0.25s ease;
+$transition-slow: all 0.4s ease;
+
+// ─── Typography ───────────────────────────────────────────────
+$font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-size-xs: 0.7rem;
+$font-size-sm: 0.8rem;
+$font-size-base: 0.875rem;
+$font-size-md: 1rem;
+$font-size-lg: 1.25rem;
+$font-size-xl: 1.5rem;
+$font-size-2xl: 2rem;
