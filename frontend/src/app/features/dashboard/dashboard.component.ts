@@ -107,10 +107,14 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
               <a routerLink="/deals" class="btn btn-secondary btn-sm">View All →</a>
             </div>
             <div class="deal-list" *ngIf="data()!.topDeals?.length; else noDeals">
-              <div class="deal-item" *ngFor="let deal of data()!.topDeals">
+              <div class="deal-item" *ngFor="let deal of data()!.topDeals; let i = index">
                 <div class="deal-info">
                   <div class="deal-title">{{deal.title}}</div>
                   <div class="deal-company text-muted text-sm">{{deal.companyName || '—'}}</div>
+                </div>
+                <!-- Venture Style Avatar Stack Mockup -->
+                <div class="avatar-group" style="margin-left:auto; margin-right:1rem; display:none;">
+                   <div class="avatar" title="Assigned Agent">A</div>
                 </div>
                 <div class="deal-right">
                   <div class="deal-value">₹{{deal.value | number:'1.0-0'}}</div>
@@ -163,25 +167,26 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
 
     .deal-list { display: flex; flex-direction: column; gap: 0.75rem; }
     .deal-item { display: flex; justify-content: space-between; align-items: center;
-      padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      &:hover { border-color: var(--border-accent); }
+      padding: 1rem 1.25rem; background: var(--bg-card); border-radius: 12px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: var(--transition);
+      &:hover { border-color: var(--accent); transform: translateX(2px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
     }
-    .deal-title { font-weight: 600; font-size: 0.875rem; }
-    .deal-right { text-align: right; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end; }
-    .deal-value { font-weight: 700; color: var(--success); }
+    .deal-title { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .deal-right { text-align: right; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; }
+    .deal-value { font-weight: 800; color: var(--text-primary); font-size: 1.05rem; }
 
     .quick-stat-list { display: flex; flex-direction: column; gap: 0.75rem; }
     .quick-stat { display: flex; justify-content: space-between; align-items: center;
-      padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem;
       &:last-child { border-bottom: none; }
     }
-    .quick-links-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
-    .quick-link { display: block; padding: 0.5rem 0.75rem; background: var(--bg-secondary);
-      border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 0.8rem; color: var(--text-secondary); text-decoration: none;
-      transition: var(--transition); text-align: center;
-      &:hover { border-color: var(--accent); color: var(--accent-light); background: rgba(124,58,237,0.1); }
+    .quick-links-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .quick-link { display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: var(--bg-secondary);
+      border: 1px solid var(--border); border-radius: 9999px;
+      font-size: 0.85rem; font-weight: 500; color: var(--text-primary); text-decoration: none;
+      transition: var(--transition);
+      &:hover { border-color: var(--accent); color: var(--accent); background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     }
     .spinner { width: 36px; height: 36px; border: 3px solid var(--border);
       border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
