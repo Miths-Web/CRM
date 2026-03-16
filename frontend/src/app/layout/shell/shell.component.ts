@@ -20,13 +20,10 @@ interface NavItem {
       <aside class="sidebar">
         <div class="sidebar-header">
           <div class="logo" *ngIf="!collapsed()">
-            <div class="flex items-center gap-2 font-bold text-xl tracking-tight text-[var(--accent)]">
-              <lucide-icon [img]="Zap" class="w-6 h-6"></lucide-icon>
-              <span>Dhwiti CRM</span>
-            </div>
+            <img src="logo.png" alt="Dhwiti CRM" class="main-logo-img" />
           </div>
-          <span class="logo-icon-only flex-center text-[var(--accent)]" *ngIf="collapsed()">
-            <lucide-icon [img]="Zap" class="w-6 h-6"></lucide-icon>
+          <span class="logo-icon-only flex-center" *ngIf="collapsed()">
+            <img src="logo.png" alt="D" class="collapsed-logo-img" />
           </span>
           <button class="collapse-btn flex-center" (click)="collapsed.set(!collapsed())">
             <lucide-icon [img]="collapsed() ? ArrowRightFromLine : ArrowLeftFromLine" class="w-4 h-4"></lucide-icon>
