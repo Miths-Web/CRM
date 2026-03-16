@@ -127,30 +127,35 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
             </ng-template>
           </div>
 
-          <!-- Quick Actions / Quick Stats -->
-          <div class="card">
-            <h3 class="mb-4">Quick Links & Stats</h3>
-            <div class="quick-links-grid mb-6">
-              <a routerLink="/customers" class="quick-link"><lucide-icon [img]="Plus" class="quick-link-icon"></lucide-icon> New Customer</a>
-              <a routerLink="/deals" class="quick-link"><lucide-icon [img]="CircleDollarSign" class="quick-link-icon"></lucide-icon> New Deal</a>
-              <a routerLink="/tasks" class="quick-link"><lucide-icon [img]="CheckSquare" class="quick-link-icon"></lucide-icon> New Task</a>
-              <a routerLink="/emails" class="quick-link"><lucide-icon [img]="Mail" class="quick-link-icon"></lucide-icon> Send Email</a>
+          <!-- Quick Links & Activity Timeline (Command Center) -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            
+            <div class="flex-between mb-4">
+              <h3>Recent Activity</h3>
+              <a routerLink="/tasks" class="btn btn-secondary btn-sm" style="background: transparent;">View All</a>
+            </div>
+            
+            <div class="activity-timeline">
+              <div class="activity-item" *ngFor="let act of recentActivities">
+                <div class="avatar" style="width: 2.25rem; height: 2.25rem;">{{act.user}}</div>
+                <div class="activity-content">
+                  <div class="activity-text">
+                    <strong>{{act.name}}</strong> {{act.action}} 
+                    <span style="color: var(--text-primary); font-weight: 500;">{{act.target}}</span>
+                  </div>
+                  <div class="activity-time">{{act.time}}</div>
+                </div>
+              </div>
             </div>
 
-            <div class="quick-stat-list">
-              <div class="quick-stat">
-                <span class="text-muted">Avg. Deal Size</span>
-                <strong>₹{{data()!.averageDealSize | number:'1.0-0'}}</strong>
-              </div>
-              <div class="quick-stat">
-                <span class="text-muted">Total Won Value</span>
-                <strong class="text-success">₹{{data()!.totalClosedWonValue | number:'1.0-0'}}</strong>
-              </div>
-              <div class="quick-stat">
-                <span class="text-muted">Upcoming Events</span>
-                <strong>{{data()!.upcomingEvents}}</strong>
-              </div>
+            <!-- Sleek Action Pills -->
+            <h4 class="mt-6 mb-3" style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px">Quick Actions</h4>
+            <div class="quick-links-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <a routerLink="/leads" class="quick-link"><lucide-icon [img]="Target" class="quick-link-icon"></lucide-icon> Lead</a>
+              <a routerLink="/deals" class="quick-link"><lucide-icon [img]="CircleDollarSign" class="quick-link-icon"></lucide-icon> Deal</a>
+              <a routerLink="/tasks" class="quick-link"><lucide-icon [img]="CheckSquare" class="quick-link-icon"></lucide-icon> Task</a>
             </div>
+
           </div>
         </div>
       </ng-container>
@@ -191,6 +196,14 @@ import { LucideAngularModule, LayoutDashboard, RefreshCw, Users, Target, CircleD
     .spinner { width: 36px; height: 36px; border: 3px solid var(--border);
       border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Venture UI Activity Timeline */
+    .activity-timeline { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem; flex: 1;}
+    .activity-item { display: flex; gap: 0.875rem; align-items: flex-start; }
+    .activity-content { flex: 1; padding-bottom: 1rem; border-bottom: 1px solid var(--bg-secondary); }
+    .activity-item:last-child .activity-content { border-bottom: none; padding-bottom: 0; }
+    .activity-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+    .activity-time { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; font-weight: 500;}
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -198,6 +211,14 @@ export class DashboardComponent implements OnInit {
   data = signal<DashboardData | null>(null);
   salesData = signal<SalesReport | null>(null);
   isAdminOrManager = signal(false);
+
+  // Fake Data for Venture Command Center UI
+  recentActivities = [
+    { user: 'R', name: 'Rahul S.', action: 'moved deal', target: 'Cloud ERP Migration', time: '10 mins ago', type: 'success' },
+    { user: 'P', name: 'Pooja Y.', action: 'completed task', target: 'Follow up call with Microsoft', time: '1 hr ago', type: 'info' },
+    { user: 'M', name: 'Mithlesh Y.', action: 'created new lead', target: 'Venture Capital Group', time: '3 hrs ago', type: 'warning' },
+    { user: 'A', name: 'Amit K.', action: 'sent an email to', target: 'Rajesh from Infosys', time: '5 hrs ago', type: 'gray' },
+  ];
 
   readonly LayoutDashboard = LayoutDashboard;
   readonly RefreshCw = RefreshCw;
