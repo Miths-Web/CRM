@@ -19,16 +19,19 @@ export interface Lead {
 }
 
 export interface LeadCreateDto {
+    title: string;        // BUG-012 FIX: Backend mein Title required hai — ab frontend mein bhi hai
     firstName: string;
     lastName: string;
     email: string;
     phone?: string;
     company?: string;
+    jobTitle?: string;
     source: string;
     status?: string;
     estimatedValue?: number;
-    notes?: string;
-    assignedTo?: string;
+    description?: string;
+    score?: number;       // UpdateLeadDto ke saath align
+    assignedToUserId?: string;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,4 +1,4 @@
-﻿using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Features.Leads.DTOs;
 using CRM.Domain.Entities;
@@ -59,7 +59,8 @@ namespace CRM.Infrastructure.Services
             return MapToDto(addedLead);
         }
 
-        public async Task UpdateLeadAsync(Guid id, CreateLeadDto updateDto)
+        // BUG-011 FIX: UpdateLeadDto use karo, CreateLeadDto nahi — Score update ke liye
+        public async Task UpdateLeadAsync(Guid id, UpdateLeadDto updateDto)
         {
             var lead = await _leadRepository.GetByIdAsync(id);
             if (lead == null) throw new NotFoundException("Lead not found");
@@ -76,6 +77,7 @@ namespace CRM.Infrastructure.Services
             lead.EstimatedValue   = updateDto.EstimatedValue;
             lead.Description      = updateDto.Description;
             lead.AssignedToUserId = updateDto.AssignedToUserId;
+            if (updateDto.Score.HasValue) lead.Score = updateDto.Score.Value; // Score bhi update kar sakte hain
             lead.UpdatedAt        = DateTime.UtcNow;
 
             await _leadRepository.UpdateAsync(lead);
@@ -89,6 +91,7 @@ namespace CRM.Infrastructure.Services
         /// <summary>
         /// Lead ko Customer + Company mein convert karta hai.
         /// Naya Company + Customer record banta hai database mein.
+        /// BUG-019 FIX: Transaction use kiya — partial save se bachao.
         /// </summary>
         public async Task ConvertLeadAsync(Guid id, Guid currentUserId)
         {
@@ -97,43 +100,54 @@ namespace CRM.Infrastructure.Services
             if (lead.Status == LeadStatus.Converted)
                 throw new BusinessException("Lead is already converted.");
 
-            // 1. CompanyMaster banao (Lead ke company info se)
-            var company = new CompanyMaster
+            // BUG-019 FIX: Transaction mein wrap karo — atomicity ensure karo
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                CompanyName = lead.Company ?? $"{lead.FirstName} {lead.LastName}",
-                Email       = lead.Email,
-                CreatedDate = DateTime.UtcNow,
-                UpdatedDate = DateTime.UtcNow,
-                CreatedBy   = currentUserId
-            };
-            _context.Companies.Add(company);
-            await _context.SaveChangesAsync();
+                // 1. CompanyMaster banao (Lead ke company info se)
+                var company = new CompanyMaster
+                {
+                    CompanyName = lead.Company ?? $"{lead.FirstName} {lead.LastName}",
+                    Email       = lead.Email,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow,
+                    CreatedBy   = currentUserId
+                };
+                _context.Companies.Add(company);
 
-            // 2. CustomerMaster banao (Lead ke personal info se)
-            var customer = new CustomerMaster
+                // 2. CustomerMaster banao (Lead ke personal info se)
+                var customer = new CustomerMaster
+                {
+                    CompanyId        = company.Id,
+                    FirstName        = lead.FirstName ?? "Unknown",
+                    LastName         = lead.LastName  ?? "",
+                    Email            = lead.Email,
+                    PhoneNo          = lead.Phone,
+                    Designation      = lead.JobTitle,
+                    AssignedToUserId = lead.AssignedToUserId,
+                    CreatedDate      = DateTime.UtcNow,
+                    UpdatedDate      = DateTime.UtcNow,
+                    CreatedBy        = currentUserId
+                };
+                _context.Customers.Add(customer);
+
+                // 3. Lead ko Converted mark karo
+                lead.Status                 = LeadStatus.Converted;
+                lead.ConvertedToCustomerId  = customer.Id;
+                lead.ConvertedToCompanyId   = company.Id;
+                lead.ConvertedAt            = DateTime.UtcNow;
+                lead.UpdatedAt              = DateTime.UtcNow;
+
+                // Sab ek saath save karo
+                await _context.SaveChangesAsync();
+                await _leadRepository.UpdateAsync(lead);
+                await transaction.CommitAsync();
+            }
+            catch
             {
-                CompanyId        = company.Id,
-                FirstName        = lead.FirstName ?? "Unknown",
-                LastName         = lead.LastName  ?? "",
-                Email            = lead.Email,
-                PhoneNo          = lead.Phone,
-                Designation      = lead.JobTitle,
-                AssignedToUserId = lead.AssignedToUserId,
-                CreatedDate      = DateTime.UtcNow,
-                UpdatedDate      = DateTime.UtcNow,
-                CreatedBy        = currentUserId
-            };
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
-
-            // 3. Lead ko Converted mark karo
-            lead.Status                 = LeadStatus.Converted;
-            lead.ConvertedToCustomerId  = customer.Id;
-            lead.ConvertedToCompanyId   = company.Id;
-            lead.ConvertedAt            = DateTime.UtcNow;
-            lead.UpdatedAt              = DateTime.UtcNow;
-
-            await _leadRepository.UpdateAsync(lead);
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         private LeadDto MapToDto(Lead lead)

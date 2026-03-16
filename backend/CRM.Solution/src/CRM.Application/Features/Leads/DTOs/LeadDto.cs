@@ -1,4 +1,4 @@
-﻿using CRM.Domain.Enums;
+using CRM.Domain.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -43,5 +43,28 @@ namespace CRM.Application.Features.Leads.DTOs
         public decimal? EstimatedValue { get; set; }
         public string? Description { get; set; }
         public Guid? AssignedToUserId { get; set; }
+    }
+
+    // BUG-011 FIX: Alag UpdateLeadDto banaya — Score bhi update ho sake
+    public class UpdateLeadDto
+    {
+        [Required]
+        [StringLength(255)]
+        public string Title { get; set; } = string.Empty;
+
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+
+        [EmailAddress]
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Company { get; set; }
+        public string? JobTitle { get; set; }
+        public LeadStatus Status { get; set; } = LeadStatus.New;
+        public LeadSource? Source { get; set; }
+        public decimal? EstimatedValue { get; set; }
+        public string? Description { get; set; }
+        public Guid? AssignedToUserId { get; set; }
+        public int? Score { get; set; } // Score manually set kar sakte hain
     }
 }

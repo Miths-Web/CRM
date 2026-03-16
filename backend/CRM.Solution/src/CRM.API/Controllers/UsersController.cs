@@ -104,6 +104,12 @@ namespace CRM.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
+            // BUG-006 FIX: Sirf Admin ya khud apna data dekh sakta hai
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserIdStr, out var currentUserId)) return Unauthorized();
+            if (id != currentUserId && !User.IsInRole("Admin"))
+                return Forbid();
+
             var user = await _context.Users
                 .Include(u => u.Roles)
                 .FirstOrDefaultAsync(u => u.Id == id);
@@ -130,6 +136,12 @@ namespace CRM.API.Controllers
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // BUG-007 FIX: Sirf Admin ya khud apna profile update kar sakta hai
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserIdStr, out var currentUserId)) return Unauthorized();
+            if (id != currentUserId && !User.IsInRole("Admin"))
+                return Forbid();
 
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound(new { message = "User not found." });
@@ -204,6 +216,24 @@ namespace CRM.API.Controllers
             user.UpdatedAt           = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return Ok(new { message = $"Account for {user.Email} has been unlocked successfully." });
+        }
+
+        /// <summary>DELETE /api/users/{id} — Admin only, permanently delete a user</summary>
+        [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            // BUG-013 FIX: Delete endpoint add kiya — frontend iska use karta tha but endpoint missing tha
+            var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(currentUserIdStr, out var currentUserId) && currentUserId == id)
+                return BadRequest(new { message = "Aap khud apna account delete nahi kar sakte." });
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"User '{user.Email}' deleted successfully." });
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using CRM.Infrastructure.Data;
+using CRM.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -92,7 +92,9 @@ namespace CRM.API.Controllers
                 .OrderByDescending(m => m.ScheduledAt)
                 .Select(m => new
                 {
-                    m.Id, m.Title, m.JitsiUrl, m.Password,
+                    m.Id, m.Title, m.JitsiUrl,
+                    // BUG-020 FIX: Password list mein nahi — sirf GetById mein milegi
+                    HasPassword  = m.Password != null,
                     m.ScheduledAt, m.DurationMinutes, m.Status,
                     HostName     = m.HostUser != null ? $"{m.HostUser.FirstName} {m.HostUser.LastName}" : null,
                     CustomerName = m.RelatedCustomer != null ? $"{m.RelatedCustomer.FirstName} {m.RelatedCustomer.LastName}" : null,

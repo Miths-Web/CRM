@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, EMPTY } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
@@ -24,7 +24,8 @@ export class AuthService {
         return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, request).pipe(
             tap(res => {
                 if (res.success && res.user) {
-                    localStorage.setItem(this.USER_KEY, JSON.stringify(res.user));
+                    // BUG-005 FIX: sessionStorage use karo — tab close hone par clear hota hai
+                    sessionStorage.setItem(this.USER_KEY, JSON.stringify(res.user));
                     this.currentUserSubject.next(res.user);
                 }
             })
@@ -36,8 +37,9 @@ export class AuthService {
     }
 
     logout(): void {
-        this.http.post(`${environment.apiUrl}/auth/logout`, {}).subscribe();
-        localStorage.removeItem(this.USER_KEY);
+        // BUG-014 FIX: Logout API error silently handle karo — user ko logout toh hona chahiye
+        this.http.post(`${environment.apiUrl}/auth/logout`, {}).pipe(catchError(() => EMPTY)).subscribe();
+        sessionStorage.removeItem(this.USER_KEY); // BUG-005 FIX: sessionStorage use karo
         this.currentUserSubject.next(null);
         this.router.navigate(['/auth/login']);
     }
@@ -49,7 +51,7 @@ export class AuthService {
     isManager(): boolean { return this.hasRole('Admin') || this.hasRole('Manager'); }
 
     private getStoredUser(): UserProfile | null {
-        try { return JSON.parse(localStorage.getItem(this.USER_KEY) ?? 'null'); }
+        try { return JSON.parse(sessionStorage.getItem(this.USER_KEY) ?? 'null'); } // BUG-005 FIX
         catch { return null; }
     }
 }

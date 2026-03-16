@@ -9,7 +9,7 @@ namespace CRM.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -147,7 +147,7 @@ namespace CRM.API.Controllers
             return Ok(new
             {
                 message = "Demo data seeded successfully!",
-                summary = new { companies = 3, customers = 4, leads = 4, deals = 3, products = 4, orders = 2, invoices = 2, payments = 1, tasks = 4, notes = 3, emails = 2, events = 3 }
+                summary = new { companies = 3, customers = 4, leads = 4, deals = 6, products = 4, orders = 2, invoices = 2, payments = 1, tasks = 4, notes = 3, emails = 2, events = 3 }
             });
         }
     }

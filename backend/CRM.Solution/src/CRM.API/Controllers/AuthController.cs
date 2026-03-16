@@ -83,12 +83,14 @@ namespace CRM.API.Controllers
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("X-Access-Token", new CookieOptions
+            var deleteOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None
-            });
+            };
+            Response.Cookies.Delete("X-Access-Token", deleteOptions);
+            Response.Cookies.Delete("X-Refresh-Token", deleteOptions); // BUG-004 FIX: Refresh token bhi delete karo
             return Ok(new { success = true, message = "Logged out successfully" });
         }
 

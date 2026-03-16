@@ -79,8 +79,8 @@ namespace CRM.API.Controllers
             var order = await _db.Orders.FindAsync(req.OrderId);
             if (order == null) return BadRequest("Order not found.");
 
-            var count       = await _db.Invoices.CountAsync() + 1;
-            var invoiceNum  = $"INV-{DateTime.UtcNow:yyyy}-{count:D4}";
+            // BUG-009 FIX: Race condition se bachne ke liye GUID suffix use karo
+            var invoiceNum  = $"INV-{DateTime.UtcNow:yyyy}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
             var invoice = new Invoice {
                 InvoiceNumber    = invoiceNum,
@@ -113,6 +113,13 @@ namespace CRM.API.Controllers
         {
             var invoice = await _db.Invoices.FindAsync(id);
             if (invoice == null || invoice.IsDelete) return NotFound();
+
+            // BUG-008 FIX: Overpayment check — due amount se zyada payment allowed nahi
+            var dueAmount = invoice.TotalAmount - invoice.PaidAmount;
+            if (dto.Amount <= 0)
+                return BadRequest(new { message = "Payment amount must be greater than zero." });
+            if (dto.Amount > dueAmount)
+                return BadRequest(new { message = $"Payment amount (₹{dto.Amount}) exceeds the due amount (₹{dueAmount})." });
 
             var payment = new Payment {
                 InvoiceId      = id,

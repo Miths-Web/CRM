@@ -70,9 +70,8 @@ namespace CRM.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
         {
-            // Generate order number
-            var count     = await _db.Orders.CountAsync() + 1;
-            var orderNum  = $"ORD-{DateTime.UtcNow:yyyy}-{count:D4}";
+            // BUG-010 FIX: Race condition se bachne ke liye GUID suffix use karo
+            var orderNum  = $"ORD-{DateTime.UtcNow:yyyy}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
 
             decimal subTotal = 0, taxTotal = 0;
             var items = new List<OrderItem>();

@@ -137,10 +137,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/chat/chat.component').then(m => m.ChatComponent)
             },
 
-            // ── Meetings — All except Support Agent ──
+            // ── Meetings — All except no restrictions (Support Agent bhi allowed) ──
             {
                 path: 'meetings',
-                canActivate: [roleGuard(['Admin', 'Manager', 'Sales Rep', 'Viewer'])],
+                canActivate: [roleGuard(ALL_ROLES)],  // BUG-016 FIX: Support Agent bhi meetings dekh sake
                 loadComponent: () => import('./features/meetings/meetings.component').then(m => m.MeetingsComponent)
             },
 

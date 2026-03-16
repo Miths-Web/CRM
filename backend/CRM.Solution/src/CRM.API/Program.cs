@@ -125,15 +125,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var hubToken = ctx.Request.Query["access_token"];
                 var path  = ctx.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(hubToken) && path.StartsWithSegments("/hubs"))
-                    ctx.Token = hubToken;
-                
-                // Prioritize X-Access-Token cookie for API, then access_token cookie
-                if (ctx.Request.Cookies.TryGetValue("X-Access-Token", out var xAccessTokenCookie))
-                    ctx.Token = xAccessTokenCookie;
-                else if (ctx.Request.Cookies.TryGetValue("access_token", out var accessTokenCookie))
-                    ctx.Token = accessTokenCookie;
 
+                // BUG-003 FIX: SignalR aur API ke liye alag priority chain
+                // 1. Hub path pe query string token sabse pehle
+                if (!string.IsNullOrEmpty(hubToken) && path.StartsWithSegments("/hubs"))
+                {
+                    ctx.Token = hubToken;
+                }
+                // 2. Sirf regular API calls ke liye cookies check karo (hub token ko override mat karo)
+                else if (ctx.Request.Cookies.TryGetValue("X-Access-Token", out var xAccessTokenCookie))
+                {
+                    ctx.Token = xAccessTokenCookie;
+                }
+                else if (ctx.Request.Cookies.TryGetValue("access_token", out var accessTokenCookie))
+                {
+                    ctx.Token = accessTokenCookie;
+                }
+                
                 return System.Threading.Tasks.Task.CompletedTask;
             }
         };

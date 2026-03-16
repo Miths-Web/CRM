@@ -45,7 +45,7 @@ namespace CRM.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] CreateLeadDto model)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLeadDto model)  // BUG-011 FIX
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 

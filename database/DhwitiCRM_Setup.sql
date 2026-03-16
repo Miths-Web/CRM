@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 --  DhwitiCRM — Complete Database Setup (v2.0)
 --  Microsoft SQL Server 2019/2022 | SQL Server Express
 --  Run this ONE FILE in SSMS to setup everything from scratch
@@ -71,6 +71,9 @@ CREATE TABLE Users (
     LastLogin           DATETIME2        NULL,
     RefreshToken        NVARCHAR(500)    NULL,
     RefreshTokenExpiry  DATETIME2        NULL,
+    -- BUG-018 FIX: Account lockout columns — C# entity mein the, SQL script mein missing the
+    FailedLoginAttempts INT              NOT NULL DEFAULT 0,
+    LockoutEnd          DATETIME2        NULL,
     CreatedAt           DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
     UpdatedAt           DATETIME2        NOT NULL DEFAULT GETUTCDATE()
 );
