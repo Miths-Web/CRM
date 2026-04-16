@@ -9,6 +9,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Features.Auth.DTOs;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using CRM.API.Attributes;
 
 namespace CRM.API.Controllers
 {
@@ -28,10 +31,11 @@ namespace CRM.API.Controllers
 
         /// <summary>GET /api/users — Admin only, list all users</summary>
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [HasPermission("Users", "Read")]
         public async Task<IActionResult> GetAll()
         {
             var users = await _context.Users
+                .Where(u => !u.IsDelete)
                 .Include(u => u.Roles)
                 .Select(u => new UserDto
                 {
@@ -51,9 +55,31 @@ namespace CRM.API.Controllers
             return Ok(users);
         }
 
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetUserLookup()
+        {
+            var query = _context.Users.Where(u => u.IsActive && !u.IsDelete).AsQueryable();
+
+            // strict rule: Sales Rep can only assign to other Sales Reps (not Admin/Manager)
+            if (User.IsInRole("Sales Rep") && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
+            {
+                query = query.Where(u => u.Roles.Any(r => r.Name == "Sales Rep"));
+            }
+
+            var users = await query
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    Name = u.FirstName + " " + u.LastName + " (" + (u.Roles.FirstOrDefault() != null ? u.Roles.FirstOrDefault().Name : "No Role") + ")"
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+
         /// <summary>POST /api/users — Admin only, create a user with a specific role</summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [HasPermission("Users", "Create")]
         public async Task<IActionResult> Create([FromBody] RegisterRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -100,8 +126,56 @@ namespace CRM.API.Controllers
             return Ok(response);
         }
 
+        /// <summary>POST /api/users/profile/avatar — Upload avatar and save to database</summary>
+        [HttpPost("profile/avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            if (file == null || file.Length == 0) return BadRequest(new { message = "No file uploaded." });
+            if (file.Length > 5 * 1024 * 1024) return BadRequest(new { message = "File size exceeds 5MB limit." }); // 5MB limit
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.CopyToAsync(memoryStream);
+                var base64 = Convert.ToBase64String(memoryStream.ToArray());
+                var extension = Path.GetExtension(file.FileName)?.TrimStart('.').ToLower() ?? "jpeg";
+                var mimeType = extension == "png" ? "image/png" : 
+                               extension == "gif" ? "image/gif" : 
+                               extension == "webp" ? "image/webp" : "image/jpeg";
+                
+                user.AvatarUrl = $"data:{mimeType};base64,{base64}";
+                user.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { avatarUrl = user.AvatarUrl, message = "Avatar updated successfully in database." });
+        }
+
+        /// <summary>DELETE /api/users/profile/avatar — Remove avatar from database</summary>
+        [HttpDelete("profile/avatar")]
+        public async Task<IActionResult> RemoveAvatar()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.AvatarUrl = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Avatar removed successfully." });
+        }
+
         /// <summary>GET /api/users/{id} — Get single user</summary>
         [HttpGet("{id:guid}")]
+        [HasPermission("Users", "Read")]
         public async Task<IActionResult> GetById(Guid id)
         {
             // BUG-006 FIX: Sirf Admin ya khud apna data dekh sakta hai
@@ -133,6 +207,7 @@ namespace CRM.API.Controllers
 
         /// <summary>PUT /api/users/{id} — Update user profile</summary>
         [HttpPut("{id:guid}")]
+        [HasPermission("Users", "Update")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -229,9 +304,11 @@ namespace CRM.API.Controllers
                 return BadRequest(new { message = "Aap khud apna account delete nahi kar sakte." });
 
             var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound(new { message = "User not found." });
+            if (user == null || user.IsDelete) return NotFound(new { message = "User not found." });
 
-            _context.Users.Remove(user);
+            user.IsDelete = true;
+            user.IsActive = false; // Also deactivate so they can't login anymore
+            user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return Ok(new { message = $"User '{user.Email}' deleted successfully." });
         }

@@ -60,6 +60,15 @@ export class SettingsService {
         return this.api.put<UserProfile>('users/profile', dto);
     }
 
+    uploadAvatar(fileData: FormData): Observable<{avatarUrl: string, message: string}> {
+        // Assume API accepts multipart/form-data for the avatar file payload.
+        return this.api.post<{avatarUrl: string, message: string}>('users/profile/avatar', fileData);
+    }
+
+    removeAvatar(): Observable<{message: string}> {
+        return this.api.delete<{message: string}>('users/profile/avatar');
+    }
+
     changePassword(dto: ChangePasswordDto): Observable<{ success: boolean; message: string }> {
         return this.api.post('users/change-password', dto);
     }
@@ -67,6 +76,11 @@ export class SettingsService {
     /** Users (Admin only) */
     getAllUsers(): Observable<UserProfile[]> {
         return this.api.get<UserProfile[]>('users');
+    }
+
+    /** Lookup users for dropdowns (Safe for any logged in user) */
+    getUserLookup(): Observable<any[]> {
+        return this.api.get<any[]>('users/lookup');
     }
 
     createUser(dto: { firstName: string; lastName: string; email: string; password: string; role: string }): Observable<UserProfile> {
@@ -106,5 +120,10 @@ export class SettingsService {
 
     clearAllData(): Observable<any> {
         return this.api.delete<any>('admin/clear-all');
+    }
+
+    /** Admin — Fix existing Role Permissions */
+    seedDefaultPermissions(): Observable<any> {
+        return this.api.post<any>('roles/seed-defaults', {});
     }
 }

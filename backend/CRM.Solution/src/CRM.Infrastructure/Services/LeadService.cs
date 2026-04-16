@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
@@ -38,7 +39,7 @@ namespace CRM.Infrastructure.Services
 
         public async Task<IReadOnlyList<LeadDto>> GetPagedLeadsByUserAsync(Guid userId, int pageNumber, int pageSize)
         {
-            // Issue #3 FIX: Sirf is user ko assigned leads return karo
+            // Strict CRM Rule: Sales rep must only see leads Explicitly assigned to them
             var all = await _leadRepository.FindAsync(l => l.AssignedToUserId == userId);
             return all
                 .OrderByDescending(l => l.CreatedAt)
@@ -50,20 +51,22 @@ namespace CRM.Infrastructure.Services
 
         public async Task<LeadDto> CreateLeadAsync(CreateLeadDto createDto)
         {
+            // XSS Prevention (Bug #10 Fix): Encode all string inputs before saving
+            var enc = HtmlEncoder.Default;
             var lead = new Lead
             {
-                Title            = createDto.Title,
-                FirstName        = createDto.FirstName,
-                LastName         = createDto.LastName,
-                Email            = createDto.Email,
+                Title            = enc.Encode(createDto.Title ?? string.Empty),
+                FirstName        = enc.Encode(createDto.FirstName ?? string.Empty),
+                LastName         = createDto.LastName != null ? enc.Encode(createDto.LastName) : null,
+                Email            = createDto.Email,  // Email intentionally not HTML-encoded (special chars valid)
                 Phone            = createDto.Phone,
-                Company          = createDto.Company,
-                JobTitle         = createDto.JobTitle,
+                Company          = createDto.Company != null ? enc.Encode(createDto.Company) : null,
+                JobTitle         = createDto.JobTitle != null ? enc.Encode(createDto.JobTitle) : null,
                 Status           = createDto.Status,
                 Source           = createDto.Source,
                 Score            = 0,
                 EstimatedValue   = createDto.EstimatedValue,
-                Description      = createDto.Description,
+                Description      = createDto.Description != null ? enc.Encode(createDto.Description) : null,
                 AssignedToUserId = createDto.AssignedToUserId
             };
 
@@ -77,19 +80,21 @@ namespace CRM.Infrastructure.Services
             var lead = await _leadRepository.GetByIdAsync(id);
             if (lead == null) throw new NotFoundException("Lead not found");
 
-            lead.Title            = updateDto.Title;
-            lead.FirstName        = updateDto.FirstName;
-            lead.LastName         = updateDto.LastName;
+            // XSS Prevention (Bug #10 Fix): Encode all string inputs before saving
+            var enc = HtmlEncoder.Default;
+            lead.Title            = enc.Encode(updateDto.Title ?? string.Empty);
+            lead.FirstName        = enc.Encode(updateDto.FirstName ?? string.Empty);
+            lead.LastName         = updateDto.LastName != null ? enc.Encode(updateDto.LastName) : null;
             lead.Email            = updateDto.Email;
             lead.Phone            = updateDto.Phone;
-            lead.Company          = updateDto.Company;
-            lead.JobTitle         = updateDto.JobTitle;
+            lead.Company          = updateDto.Company != null ? enc.Encode(updateDto.Company) : null;
+            lead.JobTitle         = updateDto.JobTitle != null ? enc.Encode(updateDto.JobTitle) : null;
             lead.Status           = updateDto.Status;
             lead.Source           = updateDto.Source;
             lead.EstimatedValue   = updateDto.EstimatedValue;
-            lead.Description      = updateDto.Description;
+            lead.Description      = updateDto.Description != null ? enc.Encode(updateDto.Description) : null;
             lead.AssignedToUserId = updateDto.AssignedToUserId;
-            if (updateDto.Score.HasValue) lead.Score = updateDto.Score.Value; // Score bhi update kar sakte hain
+            if (updateDto.Score.HasValue) lead.Score = updateDto.Score.Value;
             lead.UpdatedAt        = DateTime.UtcNow;
 
             await _leadRepository.UpdateAsync(lead);
@@ -143,16 +148,32 @@ namespace CRM.Infrastructure.Services
                 };
                 _context.Customers.Add(customer);
 
-                // 3. Lead ko Converted mark karo
+                // 3. Deal (Opportunity) banao — Prospects/Prospecting stage
+                var deal = new Deal
+                {
+                    Title              = $"Deal: {company.CompanyName}",
+                    CompanyId          = company.Id,
+                    CustomerId         = customer.Id,
+                    AssignedToUserId   = lead.AssignedToUserId,
+                    StageId            = 1, // Prospecting
+                    Status             = Domain.Enums.DealStatus.Open,
+                    Value              = lead.EstimatedValue ?? 0,
+                    Description        = lead.Description,
+                    CreatedAt          = DateTime.UtcNow,
+                    UpdatedAt          = DateTime.UtcNow
+                };
+                _context.Deals.Add(deal);
+
+                // 4. Lead ko Converted mark karo
                 lead.Status                 = LeadStatus.Converted;
                 lead.ConvertedToCustomerId  = customer.Id;
                 lead.ConvertedToCompanyId   = company.Id;
+                lead.ConvertedToDealId      = deal.Id; // Link the new deal
                 lead.ConvertedAt            = DateTime.UtcNow;
                 lead.UpdatedAt              = DateTime.UtcNow;
 
                 // Sab ek saath save karo
                 await _context.SaveChangesAsync();
-                await _leadRepository.UpdateAsync(lead);
                 await transaction.CommitAsync();
             }
             catch

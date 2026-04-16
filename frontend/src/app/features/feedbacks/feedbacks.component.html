@@ -1,0 +1,82 @@
+<div class="feedbacks-container">
+  <div class="page-header">
+    <div class="header-left">
+      <div class="icon-container bg-yellow"><lucide-icon [img]="MessageSquare"></lucide-icon></div>
+      <div>
+        <h1>Customer Feedbacks</h1>
+        <p class="text-muted">Review, assign, and resolve customer complaints, queries, and feedback.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="filter-group">
+        <label><lucide-icon [img]="Filter" size="14"></lucide-icon> Filter Status:</label>
+        <select class="form-control" [(ngModel)]="statusFilter">
+          <option value="All">All Feedbacks</option>
+          <option value="New">New</option>
+          <option value="InReview">In Review</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <lucide-icon [img]="Loader2" class="spin"></lucide-icon>
+    <p>Loading feedbacks...</p>
+  </div>
+
+  <div class="feedback-list" *ngIf="!isLoading">
+    <div class="empty-state" *ngIf="filteredFeedbacks.length === 0">
+      <lucide-icon [img]="MessageSquare" size="48" class="text-muted mx-auto"></lucide-icon>
+      <h3>No Feedbacks Found</h3>
+      <p>No feedback matches the selected filter condition.</p>
+    </div>
+
+    <div class="feedback-card" *ngFor="let f of filteredFeedbacks" [ngClass]="{'resolved': f.status === 'Resolved'}">
+      <div class="card-header">
+        <div class="customer-info">
+          <div class="avatar"><lucide-icon [img]="User" size="20"></lucide-icon></div>
+          <div>
+            <h4>{{ f.customerName }}</h4>
+            <span class="date">{{ f.createdAt | date:'medium' }}</span>
+          </div>
+        </div>
+        <div class="badges">
+          <span class="badge" [ngClass]="f.status.toLowerCase()">{{ f.status }}</span>
+          <span class="badge category">{{ f.category }}</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h5>{{ f.subject }}</h5>
+        <div class="rating">
+          <lucide-icon [img]="Star" size="14" *ngFor="let i of getStars(f.rating)" class="star filled"></lucide-icon>
+        </div>
+        <p class="comments">"{{ f.comments }}"</p>
+      </div>
+
+      <div class="card-footer">
+        <div class="assignment" *ngIf="canEdit">
+          <label>Assigned To:</label>
+          <select class="form-control-sm" [ngModel]="f.assignedToUserId" (ngModelChange)="assignUser(f, $event)">
+            <option [ngValue]="null">-- Unassigned --</option>
+            <option *ngFor="let u of users" [value]="u.id">{{ u.firstName }} {{ u.lastName }}</option>
+          </select>
+        </div>
+        <div class="assignment" *ngIf="!canEdit">
+          <label>Assigned To:</label>
+          <span>{{ f.assignedToUserName || 'Unassigned' }}</span>
+        </div>
+        
+        <div class="actions" *ngIf="canEdit">
+          <button class="btn btn-sm" [ngClass]="f.status === 'New' ? 'btn-primary' : 'btn-outline'" *ngIf="f.status === 'New'" (click)="updateStatus(f, 'InReview')">
+            <lucide-icon [img]="Reply" size="14"></lucide-icon> Review
+          </button>
+          <button class="btn btn-sm" [ngClass]="f.status !== 'Resolved' ? 'btn-success' : 'btn-outline'" *ngIf="f.status !== 'Resolved'" (click)="updateStatus(f, 'Resolved')">
+            <lucide-icon [img]="CheckCircle" size="14"></lucide-icon> Mark Resolved
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

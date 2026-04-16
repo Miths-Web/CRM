@@ -69,9 +69,14 @@ namespace CRM.API.Controllers
             return NoContent();
         }
 
+        // ── DTO for status update to avoid 415 with bare enum ──
+        public record UpdateStatusDto(string Status);
+
         [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] TaskStatus status)
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto dto)
         {
+            if (!Enum.TryParse<TaskStatus>(dto.Status, ignoreCase: true, out var status))
+                return BadRequest(new { Message = $"Invalid status value: {dto.Status}. Use: Pending, InProgress, Completed, Cancelled" });
             try
             {
                 await _taskService.UpdateTaskStatusAsync(id, status);

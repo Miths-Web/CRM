@@ -6,6 +6,7 @@ export interface Email {
     id: string; subject: string; body: string; fromEmail?: string; toEmail: string;
     ccEmails?: string; bccEmails?: string; status: string;
     scheduledAt?: string; sentAt?: string; openedAt?: string; createdAt: string;
+    isStarred?: boolean; isArchived?: boolean;
 }
 export interface CreateEmailDto {
     subject: string; body: string; toEmail: string; ccEmails?: string; bccEmails?: string;
@@ -20,4 +21,8 @@ export class EmailFeatureService {
     getById(id: string): Observable<Email> { return this.api.get<Email>(`emails/${id}`); }
     send(dto: CreateEmailDto): Observable<Email> { return this.api.post<Email>('emails', dto); }
     getTemplates(): Observable<any[]> { return this.api.get<any[]>('emails/templates'); }
+
+    delete(id: string): Observable<any> { return this.api.delete(`emails/${id}`); }
+    toggleStar(id: string): Observable<Email> { return this.api.patch<Email>(`emails/${id}/star`, {}); }
+    archive(id: string): Observable<Email> { return this.api.patch<Email>(`emails/${id}/archive`, {}); }
 }

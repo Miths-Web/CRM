@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CRM.Application.Features.Auth.DTOs
 {
@@ -20,5 +20,6 @@ namespace CRM.Application.Features.Auth.DTOs
         public string Email { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public string[] Roles { get; set; } = Array.Empty<string>();
+        public string[] Permissions { get; set; } = Array.Empty<string>();
     }
 }

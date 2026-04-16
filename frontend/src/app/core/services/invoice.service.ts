@@ -29,10 +29,10 @@ export class InvoiceService {
 
     // Generate an invoice directly from an Order
     generateFromOrder(orderId: string): Observable<Invoice> {
-        return this.http.post<Invoice>(`${this.apiUrl}/from-order/${orderId}`, {});
+        return this.http.post<Invoice>(this.apiUrl, { orderId });
     }
 
-    recordPayment(invoiceId: string, payment: Partial<Payment>): Observable<Payment> {
-        return this.http.post<Payment>(`${this.apiUrl}/${invoiceId}/payments`, payment);
+    recordPayment(invoiceId: string, payment: Partial<Payment>): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/${invoiceId}/payment`, payment);
     }
 }

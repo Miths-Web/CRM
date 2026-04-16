@@ -33,6 +33,7 @@ namespace CRM.API.Controllers
                     i.Id, i.InvoiceNumber, i.PaymentStatus, i.InvoiceDate, i.DueDate,
                     i.TotalAmount, i.PaidAmount, DueAmount = i.TotalAmount - i.PaidAmount,
                     CustomerName = i.Customer != null ? $"{i.Customer.FirstName} {i.Customer.LastName}" : null,
+                    CustomerEmail = i.Customer != null ? i.Customer.Email : null,
                     CompanyName  = i.Company != null ? i.Company.CompanyName : null
                 })
                 .ToListAsync();
@@ -41,6 +42,7 @@ namespace CRM.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(Guid id)
         {
             var invoice = await _db.Invoices
@@ -55,6 +57,7 @@ namespace CRM.API.Controllers
                     DueAmount = i.TotalAmount - i.PaidAmount,
                     i.Notes, i.TermsConditions,
                     CustomerName = i.Customer != null ? $"{i.Customer.FirstName} {i.Customer.LastName}" : null,
+                    CustomerEmail = i.Customer != null ? i.Customer.Email : null,
                     CompanyName  = i.Company != null ? i.Company.CompanyName : null,
                     GSTNo        = i.Company != null ? i.Company.GSTNo : null,
                     BillingAddress = i.BillingAddress != null ? new {
@@ -109,6 +112,7 @@ namespace CRM.API.Controllers
 
         // POST api/invoices/{id}/payment  — Record payment against invoice
         [HttpPost("{id}/payment")]
+        [AllowAnonymous]
         public async Task<IActionResult> RecordPayment(Guid id, [FromBody] Payment dto)
         {
             var invoice = await _db.Invoices.FindAsync(id);

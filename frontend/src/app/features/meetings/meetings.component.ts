@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -6,7 +6,7 @@ import { MeetingsService, Meeting } from '../../core/services/meetings.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
-import { LucideAngularModule, Video, Plus, Radio, Link, Calendar } from 'lucide-angular';
+import { LucideAngularModule, Video, Plus, Radio, Link, Calendar, Trash2 } from 'lucide-angular';
 
 @Component({
   selector: 'app-meetings',
@@ -61,7 +61,8 @@ import { LucideAngularModule, Video, Plus, Radio, Link, Calendar } from 'lucide-
           </div>
           <div class="meeting-actions">
             <button class="btn btn-primary btn-sm flex-center" (click)="joinMeeting(m)"><lucide-icon [img]="Video" class="btn-icon-sm"></lucide-icon> Join</button>
-            <button class="btn btn-secondary btn-sm flex-center" (click)="copyLink(m)"><lucide-icon [img]="Link" class="btn-icon-sm"></lucide-icon> Copy Link</button>
+            <button class="btn btn-secondary btn-sm flex-center" (click)="copyLink(m)" title="Copy Link"><lucide-icon [img]="Link" class="btn-icon-sm"></lucide-icon> Copy</button>
+            <button class="btn btn-danger btn-sm flex-center" (click)="deleteMeeting(m.id)" title="Delete Meeting"><lucide-icon [img]="Trash2" class="btn-icon-sm"></lucide-icon></button>
           </div>
         </div>
       </div>
@@ -152,6 +153,7 @@ export class MeetingsComponent implements OnInit {
   readonly Radio = Radio;
   readonly Link = Link;
   readonly Calendar = Calendar;
+  readonly Trash2 = Trash2;
 
   constructor(
     private meetingsSvc: MeetingsService,
@@ -205,7 +207,8 @@ export class MeetingsComponent implements OnInit {
 
   jitsiUrl(): SafeResourceUrl {
     if (!this.activeRoom()) return '';
-    const url = `${environment.jitsiServer}/${this.activeRoom()!.jitsiRoomName}`;
+    // Use #config.prejoinPageEnabled=false to skip the start screen
+    const url = `${environment.jitsiServer}/${this.activeRoom()!.jitsiRoomName}#config.prejoinPageEnabled=false`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 
@@ -216,5 +219,16 @@ export class MeetingsComponent implements OnInit {
     ).catch(() =>
       this.toast.error('Copy Failed', 'Could not copy to clipboard.')
     );
+  }
+
+  deleteMeeting(id: string) {
+    if (!confirm('Are you sure you want to delete this meeting?')) return;
+    this.meetingsSvc.delete(id).subscribe({
+      next: () => {
+        this.toast.success('Deleted', 'Meeting has been canceled and deleted.');
+        this.load();
+      },
+      error: () => this.toast.error('Delete Failed', 'Could not delete the meeting.')
+    });
   }
 }

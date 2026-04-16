@@ -1,4 +1,4 @@
-﻿using CRM.Domain.Entities;
+using CRM.Domain.Entities;
 using CRM.Domain.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
@@ -18,6 +18,7 @@ namespace CRM.Application.Features.Tasks.DTOs
         public bool IsCompleted { get; set; }
         public DateTime? CompletedAt { get; set; }
         public Guid? AssignedToUserId { get; set; }
+        public string? AssignedToUserName { get; set; }
         public Guid? CustomerId { get; set; }
         public Guid? LeadId { get; set; }
         public Guid? DealId { get; set; }

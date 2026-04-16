@@ -19,9 +19,11 @@ namespace CRM.Domain.Entities
         public DateTime? ClickedAt { get; set; }
         
         public Guid? TemplateId { get; set; }
-        public Guid? RelatedCustomerId { get; set; }   // Updated from RelatedContactId
+        public Guid? RelatedCustomerId { get; set; }
         public Guid? RelatedLeadId { get; set; }
         public Guid? RelatedDealId { get; set; }
+        public bool IsStarred { get; set; } = false;
+        public bool IsArchived { get; set; } = false;
 
         public EmailTemplate? Template { get; set; }
         public CustomerMaster? RelatedCustomer { get; set; }  // Updated from Contact

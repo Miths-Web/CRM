@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 using CRM.API.Middleware;
 using CRM.API.Hubs;
 using CRM.Application.Common.Interfaces;
@@ -115,7 +116,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer              = config["Jwt:Issuer"],
             ValidAudience            = config["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(config["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(config["Jwt:Key"]!)),
+            RoleClaimType            = ClaimTypes.Role,
+            NameClaimType            = ClaimTypes.Email
         };
 
         // Allow SignalR to receive token via query string and API via HttpOnly Cookie

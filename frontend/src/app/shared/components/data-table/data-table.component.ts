@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Search, X, ArrowUp, ArrowDown, Edit2, Trash2, Inbox } from 'lucide-angular';
+import { LucideAngularModule, Search, X, ArrowUp, ArrowDown, Edit2, Trash2, Inbox, Mail } from 'lucide-angular';
 
 export interface TableColumn {
   key: string;
@@ -75,8 +75,9 @@ export interface TableColumn {
                   <!-- Actions -->
                   <div *ngSwitchCase="'actions'" class="action-btns" (click)="$event.stopPropagation()">
                     <ng-content select="[row-actions]"></ng-content>
-                    <button class="btn-icon flex-center" (click)="onEdit.emit(row)" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
-                    <button class="btn-icon danger flex-center" (click)="onDelete.emit(row)" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
+                    <button *ngIf="canEmail" class="btn-icon flex-center" style="color:var(--accent)" (click)="onEmail.emit(row)" title="Send Email"><lucide-icon [img]="Mail" class="w-4 h-4"></lucide-icon></button>
+                    <button *ngIf="canEdit" class="btn-icon flex-center" (click)="onEdit.emit(row)" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
+                    <button *ngIf="canDelete" class="btn-icon danger flex-center" (click)="onDelete.emit(row)" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
                   </div>
 
                   <!-- Default Text -->
@@ -169,8 +170,12 @@ export class DataTableComponent implements OnChanges {
   @Input() searchPlaceholder = 'Search...';
   @Input() emptyTitle = 'No data found';
   @Input() emptyText = 'Try adjusting your search or add new records.';
+  @Input() canEdit = true;
+  @Input() canDelete = true;
+  @Input() canEmail = false;
   @Output() onEdit = new EventEmitter<any>();
   @Output() onDelete = new EventEmitter<any>();
+  @Output() onEmail = new EventEmitter<any>();
   @Output() onRowSelect = new EventEmitter<any>();
 
   readonly Search = Search;
@@ -180,6 +185,7 @@ export class DataTableComponent implements OnChanges {
   readonly Edit2 = Edit2;
   readonly Trash2 = Trash2;
   readonly Inbox = Inbox;
+  readonly Mail = Mail;
 
   searchTerm = '';
   sortKey = '';

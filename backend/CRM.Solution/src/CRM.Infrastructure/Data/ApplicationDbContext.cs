@@ -22,6 +22,8 @@ namespace CRM.Infrastructure.Data
         public DbSet<Lead> Leads => Set<Lead>();
         public DbSet<Deal> Deals => Set<Deal>();
         public DbSet<DealStage> DealStages => Set<DealStage>();
+        public DbSet<Quote> Quotes => Set<Quote>();
+        public DbSet<QuoteItem> QuoteItems => Set<QuoteItem>();
 
         // Product + Order + Invoice + Payment
         public DbSet<Product> Products => Set<Product>();
@@ -44,6 +46,19 @@ namespace CRM.Infrastructure.Data
         public DbSet<LiveChatSession> LiveChatSessions => Set<LiveChatSession>();
         public DbSet<LiveChatMessage> LiveChatMessages => Set<LiveChatMessage>();
 
+        // Support Ticketing
+        public DbSet<Ticket> Tickets => Set<Ticket>();
+        public DbSet<TicketComment> TicketComments => Set<TicketComment>();
+
+        // Knowledge Base
+        public DbSet<Article> Articles => Set<Article>();
+        public DbSet<ArticleCategory> ArticleCategories => Set<ArticleCategory>();
+
+        // RBAC Permissions
+        public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+        public DbSet<Feedback> Feedbacks => Set<Feedback>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -58,7 +73,13 @@ namespace CRM.Infrastructure.Data
                     j => j.HasOne<User>().WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Cascade));
 
             // CrmTask → Tasks table
-            modelBuilder.Entity<CrmTask>().ToTable("Tasks");
+            modelBuilder.Entity<CrmTask>(e => 
+            {
+                e.ToTable("Tasks");
+                e.HasIndex(t => t.AssignedToUserId);
+                e.HasIndex(t => t.Status);
+                e.HasIndex(t => t.DueDate);
+            });
 
             // OrderMaster → OrderMaster table
             modelBuilder.Entity<OrderMaster>().ToTable("OrderMaster");
@@ -113,15 +134,52 @@ namespace CRM.Infrastructure.Data
             modelBuilder.Entity<Deal>(e =>
             {
                 e.Property(d => d.Value).HasPrecision(18, 2);
+                e.HasIndex(d => d.StageId);
+                e.HasIndex(d => d.AssignedToUserId);
+                e.HasIndex(d => d.CustomerId);
+                e.HasIndex(d => d.CompanyId);
                 e.HasOne(d => d.Customer).WithMany(c => c.Deals).HasForeignKey(d => d.CustomerId).OnDelete(DeleteBehavior.NoAction);
                 e.HasOne(d => d.Company).WithMany(co => co.Deals).HasForeignKey(d => d.CompanyId).OnDelete(DeleteBehavior.NoAction);
                 e.HasOne(d => d.AssignedToUser).WithMany().HasForeignKey(d => d.AssignedToUserId).OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // Quote
+            modelBuilder.Entity<Quote>(e =>
+            {
+                e.ToTable("Quotes");
+                e.Property(q => q.SubTotal).HasPrecision(18, 2);
+                e.Property(q => q.DiscountAmount).HasPrecision(18, 2);
+                e.Property(q => q.TaxAmount).HasPrecision(18, 2);
+                e.Property(q => q.TotalAmount).HasPrecision(18, 2);
+                e.HasIndex(q => q.QuoteNumber).IsUnique();
+                e.HasOne(q => q.Deal).WithMany().HasForeignKey(q => q.DealId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(q => q.Customer).WithMany().HasForeignKey(q => q.CustomerId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(q => q.Company).WithMany().HasForeignKey(q => q.CompanyId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(q => q.CreatedByUser).WithMany().HasForeignKey(q => q.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(q => q.UpdatedByUser).WithMany().HasForeignKey(q => q.UpdatedByUserId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(q => q.AssignedToUser).WithMany().HasForeignKey(q => q.AssignedToUserId).OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // QuoteItem
+            modelBuilder.Entity<QuoteItem>(e =>
+            {
+                e.ToTable("QuoteItems");
+                e.Property(q => q.Quantity).HasPrecision(10, 2);
+                e.Property(q => q.UnitPrice).HasPrecision(18, 2);
+                e.Property(q => q.DiscountPct).HasPrecision(5, 2);
+                e.Property(q => q.TaxRate).HasPrecision(5, 2);
+                e.Property(q => q.LineTotal).HasPrecision(18, 2);
+                e.HasOne(q => q.Quote).WithMany(q => q.Items).HasForeignKey(q => q.QuoteId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(q => q.Product).WithMany().HasForeignKey(q => q.ProductId).OnDelete(DeleteBehavior.NoAction);
             });
 
             // Lead: ConvertedToContact replaced by ConvertedToCustomer + ConvertedToCompany
             modelBuilder.Entity<Lead>(e =>
             {
                 e.Property(l => l.EstimatedValue).HasPrecision(18, 2);
+                e.HasIndex(l => l.Email);
+                e.HasIndex(l => l.Status);
+                e.HasIndex(l => l.AssignedToUserId);
                 e.HasOne(l => l.ConvertedToCustomer).WithMany().HasForeignKey(l => l.ConvertedToCustomerId).OnDelete(DeleteBehavior.SetNull);
                 e.HasOne(l => l.ConvertedToCompany).WithMany().HasForeignKey(l => l.ConvertedToCompanyId).OnDelete(DeleteBehavior.SetNull);
                 e.HasOne(l => l.ConvertedToDeal).WithMany().HasForeignKey(l => l.ConvertedToDealId).OnDelete(DeleteBehavior.SetNull);
@@ -195,6 +253,61 @@ namespace CRM.Infrastructure.Data
                 .WithMany(t => t.Emails)
                 .HasForeignKey(e => e.TemplateId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Ticketing
+            modelBuilder.Entity<Ticket>(e =>
+            {
+                e.ToTable("Tickets");
+                e.HasIndex(t => t.TicketNumber).IsUnique();
+                e.HasIndex(t => t.Status);
+                e.HasIndex(t => t.Priority);
+                e.HasIndex(t => t.CustomerId);
+                e.HasIndex(t => t.AssignedToUserId);
+                e.HasOne(t => t.Customer).WithMany().HasForeignKey(t => t.CustomerId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(t => t.AssignedToUser).WithMany().HasForeignKey(t => t.AssignedToUserId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(t => t.CreatedByUser).WithMany().HasForeignKey(t => t.CreatedByUserId).OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<TicketComment>(e =>
+            {
+                e.ToTable("TicketComments");
+                e.HasOne(c => c.Ticket).WithMany(t => t.Comments).HasForeignKey(c => c.TicketId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // Knowledge Base
+            modelBuilder.Entity<ArticleCategory>(e =>
+            {
+                e.ToTable("ArticleCategories");
+            });
+
+            modelBuilder.Entity<Article>(e =>
+            {
+                e.ToTable("Articles");
+                e.HasIndex(a => a.CategoryId);
+                e.HasIndex(a => a.IsPublished);
+                e.HasIndex(a => a.AuthorId);
+                e.HasOne(a => a.Category).WithMany(c => c.Articles).HasForeignKey(a => a.CategoryId).OnDelete(DeleteBehavior.NoAction);
+                e.HasOne(a => a.Author).WithMany().HasForeignKey(a => a.AuthorId).OnDelete(DeleteBehavior.NoAction);
+            });
+
+            // RBAC
+            modelBuilder.Entity<RolePermission>(e =>
+            {
+                e.ToTable("RolePermissions");
+                e.HasOne(rp => rp.Role).WithMany().HasForeignKey(rp => rp.RoleId).OnDelete(DeleteBehavior.Cascade);
+                e.HasIndex(rp => new { rp.RoleId, rp.Module, rp.Permission }).IsUnique();
+            });
+
+            // Feedback
+            modelBuilder.Entity<Feedback>(e =>
+            {
+                e.ToTable("Feedbacks");
+                e.HasIndex(f => f.Category);
+                e.HasIndex(f => f.Status);
+                e.HasOne(f => f.Customer).WithMany().HasForeignKey(f => f.CustomerId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(f => f.AssignedToUser).WithMany().HasForeignKey(f => f.AssignedToUserId).OnDelete(DeleteBehavior.NoAction);
+            });
         }
     }
 }

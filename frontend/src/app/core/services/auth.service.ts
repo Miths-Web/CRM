@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 
 export interface LoginRequest { email: string; password: string; }
 export interface RegisterRequest { firstName: string; lastName: string; email: string; password: string; phone?: string; }
-export interface UserProfile { id: string; firstName: string; lastName: string; email: string; avatarUrl?: string; roles: string[]; }
+export interface UserProfile { id: string; firstName: string; lastName: string; email: string; avatarUrl?: string; roles: string[]; permissions?: string[]; phone?: string; department?: string; jobTitle?: string; }
 export interface AuthResponse { success: boolean; message: string; accessToken?: string; refreshToken?: string; expiresAt?: string; user?: UserProfile; }
 
 @Injectable({ providedIn: 'root' })
@@ -46,6 +46,10 @@ export class AuthService {
 
     isLoggedIn(): boolean { return this.getCurrentUser() !== null; }
     getCurrentUser(): UserProfile | null { return this.currentUserSubject.value; }
+    updateCurrentUser(user: UserProfile): void {
+        sessionStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        this.currentUserSubject.next(user);
+    }
     hasRole(role: string): boolean { return this.getCurrentUser()?.roles?.includes(role) ?? false; }
     isAdmin(): boolean { return this.hasRole('Admin'); }
     isManager(): boolean { return this.hasRole('Admin') || this.hasRole('Manager'); }
@@ -53,5 +57,12 @@ export class AuthService {
     private getStoredUser(): UserProfile | null {
         try { return JSON.parse(sessionStorage.getItem(this.USER_KEY) ?? 'null'); } // BUG-005 FIX
         catch { return null; }
+    }
+
+    hasPermission(module: string, action: string): boolean {
+        if (this.isAdmin()) return true; // Admin has power sab kar sakta hai
+        const p = this.getCurrentUser()?.permissions;
+        if (!p) return false;
+        return p.includes(`${module}.${action}`);
     }
 }

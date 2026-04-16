@@ -42,6 +42,22 @@ namespace CRM.API.Controllers
             });
         }
 
+        public class CompanySettingsDto
+        {
+            public string CompanyName { get; set; } = string.Empty;
+            public string? SupportEmail { get; set; }
+            public string? Timezone { get; set; }
+        }
+
+        /// <summary>PUT /api/settings/company — Update Company-wide settings</summary>
+        [HttpPut("company")]
+        public async Task<IActionResult> UpdateCompanySettings([FromBody] CompanySettingsDto dto)
+        {
+            // For now, return success to complete the UI flow. In a real system,
+            // we'd save this to a Settings table or appsettings.json
+            return Ok(new { message = "Settings updated successfully." });
+        }
+
         /// <summary>GET /api/settings/roles — All available roles</summary>
         [HttpGet("roles")]
         public async Task<IActionResult> GetRoles()

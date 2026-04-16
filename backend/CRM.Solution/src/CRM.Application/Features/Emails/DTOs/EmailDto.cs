@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace CRM.Application.Features.Emails.DTOs
@@ -21,6 +21,8 @@ namespace CRM.Application.Features.Emails.DTOs
         public Guid? RelatedCustomerId { get; set; }
         public Guid? RelatedLeadId { get; set; }
         public Guid? RelatedDealId { get; set; }
+        public bool IsStarred { get; set; }
+        public bool IsArchived { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

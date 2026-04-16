@@ -1,15 +1,16 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { SettingsService } from '../../core/services/settings.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
-import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building2, Monitor, CheckCircle2, AlertTriangle, Database, Trash2, FlaskConical } from 'lucide-angular';
+import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building2, Monitor, CheckCircle2, AlertTriangle, Database, Trash2, Edit2, FlaskConical, Eye, Camera, Shield, Target, UserCheck, CircleDollarSign, MessageSquare, BarChart2, Briefcase } from 'lucide-angular';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LucideAngularModule],
   template: `
     <div class="animate-fadeIn">
       <div class="page-header">
@@ -32,10 +33,37 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
           <h3 class="settings-title">My Profile</h3>
           <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
             <div class="profile-avatar-section">
-              <div class="avatar avatar-lg">{{userInitials()}}</div>
+              <div class="profile-avatar-controls text-center mr-4" style="position:relative">
+                <div class="avatar-view-container mx-auto" style="width:100px;height:100px;border-radius:50%;overflow:visible;cursor:pointer;position:relative" (click)="showAvatarMenu.set(!showAvatarMenu())">
+                  <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:2px solid var(--border)">
+                    <div class="avatar avatar-lg" style="width:100%;height:100%;font-size:2rem" *ngIf="!avatarPreview() && !currentUser()?.avatarUrl">
+                      {{userInitials()}}
+                    </div>
+                    <img *ngIf="avatarPreview() || currentUser()?.avatarUrl" [src]="avatarPreview() || currentUser()?.avatarUrl" style="width:100%;height:100%;object-fit:cover" />
+                  </div>
+                  <div class="avatar-edit-icon" style="position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;border-radius:50%;padding:6px;box-shadow:0 2px 4px rgba(0,0,0,0.2)">
+                    <lucide-icon [img]="Camera" style="width:16px;height:16px;display:block"></lucide-icon>
+                  </div>
+                </div>
+
+                <div class="avatar-dropdown-menu" *ngIf="showAvatarMenu()">
+                  <div class="avatar-dropdown-item" *ngIf="avatarPreview() || currentUser()?.avatarUrl" (click)="viewingAvatar.set(true); showAvatarMenu.set(false)">
+                    <lucide-icon [img]="Eye" class="btn-icon-sm"></lucide-icon> View Photo
+                  </div>
+                  <div class="avatar-dropdown-item" (click)="triggerAvatarUpload(); showAvatarMenu.set(false)">
+                    <lucide-icon [img]="Camera" class="btn-icon-sm"></lucide-icon> Upload Photo
+                  </div>
+                  <div class="avatar-dropdown-item text-danger" *ngIf="avatarPreview() || currentUser()?.avatarUrl" (click)="deleteAvatar(); showAvatarMenu.set(false)">
+                    <lucide-icon [img]="Trash2" class="btn-icon-sm"></lucide-icon> Remove Photo
+                  </div>
+                </div>
+
+                <input type="file" #avatarInput accept="image/*" style="display:none" (change)="onAvatarSelected($event)" />
+              </div>
               <div>
                 <div style="font-weight:700;font-size:1rem">{{currentUser()?.firstName}} {{currentUser()?.lastName}}</div>
                 <div class="text-muted text-sm">{{currentUser()?.roles?.[0]}}</div>
+                <div class="text-xs text-muted mt-1">Administrator · Mithilesh Yadav</div>
               </div>
             </div>
             <div class="grid-2 mt-4">
@@ -108,10 +136,15 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
         <div class="card settings-card">
           <div class="flex-between mb-4">
             <h3 class="settings-title">User Management</h3>
-            <button class="btn btn-primary btn-sm" (click)="showAddUser.set(!showAddUser())">
-              <lucide-icon [img]="showAddUser() ? X : UserPlus" class="btn-icon-sm"></lucide-icon>
-              {{showAddUser() ? 'Cancel' : 'Add User'}}
-            </button>
+            <div>
+              <button class="btn btn-outline btn-sm" (click)="goTo('/settings/roles')" style="margin-right: 0.5rem">
+                <lucide-icon [img]="Shield" class="btn-icon-sm"></lucide-icon> Manage Roles
+              </button>
+              <button class="btn btn-primary btn-sm" (click)="showAddUser.set(!showAddUser())">
+                <lucide-icon [img]="showAddUser() ? X : UserPlus" class="btn-icon-sm"></lucide-icon>
+                {{showAddUser() ? 'Cancel' : 'Add User'}}
+              </button>
+            </div>
           </div>
 
           <form *ngIf="showAddUser()" [formGroup]="userForm" class="add-user-form" (ngSubmit)="createUser()">
@@ -161,13 +194,35 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
                 <div class="text-sm text-muted">{{u.email}}</div>
               </div>
               <div class="user-badges" style="align-items: center">
-                <span class="badge badge-purple">{{u.roles?.[0]}}</span>
-                <span class="badge" [ngClass]="u.isActive ? 'badge-green' : 'badge-gray'">
-                  {{u.isActive ? 'Active' : 'Inactive'}}
-                </span>
-                <button *ngIf="u.id !== currentUser()?.id" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; font-size: 0.7rem;" (click)="toggleUser(u)">
-                  {{u.isActive ? 'Deactivate' : 'Activate'}}
-                </button>
+                <!-- If Not Editing -->
+                <ng-container *ngIf="editingUserId() !== u.id">
+                  <span class="badge badge-purple">{{u.roles?.[0]}}</span>
+                  <span class="badge" [ngClass]="u.isActive ? 'badge-green' : 'badge-gray'">
+                    {{u.isActive ? 'Active' : 'Inactive'}}
+                  </span>
+                  
+                  <!-- Actions -->
+                  <div style="display:flex; gap:0.25rem; margin-left:1rem">
+                    <button class="btn btn-sm btn-outline" title="Change Role" (click)="startEditUser(u)" *ngIf="u.id !== currentUser()?.id">
+                       <lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon>
+                    </button>
+                    <button *ngIf="u.id !== currentUser()?.id" class="btn btn-secondary btn-sm" (click)="toggleUser(u)">
+                      {{u.isActive ? 'Deactivate' : 'Activate'}}
+                    </button>
+                    <button class="btn btn-sm btn-outline text-danger" title="Delete User" (click)="deleteUser(u)" *ngIf="u.id !== currentUser()?.id">
+                       <lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  </div>
+                </ng-container>
+
+                <!-- If Editing Role -->
+                <ng-container *ngIf="editingUserId() === u.id">
+                  <select class="form-control-sm" [(ngModel)]="editingUserRole" style="width:130px">
+                    <option *ngFor="let r of availableRoles" [value]="r">{{r}}</option>
+                  </select>
+                  <button class="btn btn-primary btn-sm" (click)="saveUserRole(u)">Save</button>
+                  <button class="btn btn-outline btn-sm" (click)="cancelEditUser()">Cancel</button>
+                </ng-container>
               </div>
             </div>
             <div *ngIf="users().length === 0" class="text-muted text-sm" style="padding:1rem;text-align:center">No users found</div>
@@ -210,7 +265,7 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
             <div class="info-item"><span class="text-muted">App Version</span><strong>1.0.0</strong></div>
             <div class="info-item"><span class="text-muted">App Name</span><strong>Dhwiti CRM</strong></div>
             <div class="info-item"><span class="text-muted">Backend</span><strong>.NET 8 Web API</strong></div>
-            <div class="info-item"><span class="text-muted">Database</span><strong>MySQL 8</strong></div>
+            <div class="info-item"><span class="text-muted">Database</span><strong>SQL Server</strong></div>
             <div class="info-item"><span class="text-muted">Frontend</span><strong>Angular 18</strong></div>
             <div class="info-item"><span class="text-muted">Real-time</span><strong>SignalR</strong></div>
           </div>
@@ -218,8 +273,11 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
       </div>
       <!-- Admin Tools Tab -->
       <div *ngIf="activeTab()==='admin'" class="settings-section animate-fadeIn">
-        <div class="card settings-card">
-          <h3 class="settings-title">Admin Tools</h3>
+        
+        <div class="card settings-card" style="max-width: 1000px;">
+          <!-- Admin Tools -->
+
+          <h3 class="settings-title">Data Operations</h3>
           <p class="text-muted text-sm mb-4">Use these tools to populate or reset all CRM data. Only visible to Admins.</p>
 
           <!-- Seed Demo Data -->
@@ -234,6 +292,21 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
             <button class="btn btn-success" (click)="seedDemo()" [disabled]="seeding()">
               <lucide-icon [img]="FlaskConical" class="btn-icon-sm"></lucide-icon>
               {{ seeding() ? 'Loading...' : 'Load Demo Data' }}
+            </button>
+          </div>
+
+          <!-- Fix Role Permissions -->
+          <div class="admin-tool-card" style="margin-top:1rem; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.04);">
+            <div class="admin-tool-info">
+              <lucide-icon [img]="Shield" class="tool-icon" style="color:#6366f1"></lucide-icon>
+              <div>
+                <div class="tool-title">Fix Role Permissions</div>
+                <div class="tool-desc">Auto-assigns correct permissions to existing Sales Rep, Manager, and Viewer roles. Run this once if users are getting Access Denied errors.</div>
+              </div>
+            </div>
+            <button class="btn" style="background:#6366f1;color:#fff;" (click)="fixPermissions()" [disabled]="fixingPerms()">
+              <lucide-icon [img]="Shield" class="btn-icon-sm"></lucide-icon>
+              {{ fixingPerms() ? 'Fixing...' : 'Fix Permissions' }}
             </button>
           </div>
 
@@ -253,6 +326,14 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
           </div>
         </div>
       </div>
+
+      <!-- Avatar View Modal -->
+      <div class="modal-backdrop" *ngIf="viewingAvatar()" (click)="viewingAvatar.set(false)">
+        <div class="modal-content text-center" style="max-width:500px; padding:1rem; background:transparent; box-shadow:none" (click)="$event.stopPropagation()">
+          <img [src]="avatarPreview() || currentUser()?.avatarUrl" style="max-width:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5)" />
+          <button class="btn btn-secondary mt-4" (click)="viewingAvatar.set(false)" style="background:rgba(255,255,255,0.2); color:#fff; border:none; backdrop-filter:blur(10px)">Close Viewer</button>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -266,6 +347,19 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
     .settings-title   { font-size:1rem; font-weight:700; margin-bottom:1.25rem; }
     .profile-avatar-section { display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--bg-secondary); border-radius:var(--radius-sm); }
     .avatar-lg { width:56px; height:56px; font-size:1.25rem; }
+    .text-center { text-align:center; }
+    .mx-auto { margin-left:auto; margin-right:auto; }
+    .mr-4 { margin-right: 1.5rem; }
+    .flex-center { justify-content:center; }
+    
+    .avatar-dropdown-menu { position:absolute; top:calc(100% + 5px); left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); z-index:50; width:180px; padding:0.5rem; text-align:left; animation: slideUp 0.2s ease-out; }
+    .avatar-dropdown-item { display:flex; align-items:center; gap:0.5rem; padding:0.6rem 1rem; border-radius:8px; cursor:pointer; font-size:0.85rem; color:var(--text); transition:var(--transition); }
+    .avatar-dropdown-item:hover { background:var(--bg-secondary); color:var(--accent); }
+    .avatar-dropdown-item.text-danger { color:#ef4444; }
+    .avatar-dropdown-item.text-danger:hover { background:rgba(239,68,68,0.1); }
+    
+    .modal-backdrop { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:9999; animation: fadeIn 0.2s ease-out; }
+    .modal-content  { animation: slideUp 0.3s ease-out; }
 
     .add-user-form { background:var(--bg-secondary); border-radius:var(--radius-md); padding:1.25rem; margin-bottom:1.5rem; border:1px solid var(--border-accent); }
     .user-list { display:flex; flex-direction:column; gap:0; margin-top:0.5rem; }
@@ -294,6 +388,22 @@ import { LucideAngularModule, Settings, User, Lock, Users, UserPlus, X, Building
     .form-success { padding:0.75rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-sm); color:#6ee7b7; }
     .form-error   { padding:0.75rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); color:#fca5a5; }
     .mt-4 { margin-top:1rem; }
+
+    /* Admin Modules */
+    .admin-module-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; }
+    .admin-module-card:hover { background: var(--bg-card); border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .module-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; flex-shrink: 0; }
+    .module-icon lucide-icon { width: 20px; height: 20px; }
+    .bg-blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .bg-purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+    .bg-green { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .bg-orange { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+    .bg-teal { background: rgba(20, 184, 166, 0.1); color: #14b8a6; }
+    .bg-yellow { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+    .bg-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    .module-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--text-primary); }
+    .module-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
   `]
 })
 export class SettingsComponent implements OnInit {
@@ -307,8 +417,19 @@ export class SettingsComponent implements OnInit {
   userError = signal('');
   creatingUser = signal(false);
   systemSuccess = signal(false);
-  seeding  = signal(false);
-  clearing = signal(false);
+  seeding      = signal(false);
+  clearing     = signal(false);
+  fixingPerms  = signal(false);
+  avatarPreview = signal<string | null>(null);
+  viewingAvatar = signal(false);
+  showAvatarMenu = signal(false);
+
+  // User Management Role Edit State
+  editingUserId = signal<string | null>(null);
+  editingUserRole = '';
+  availableRoles = ['Admin', 'Manager', 'Sales Rep', 'Support Agent', 'Viewer'];
+
+  @ViewChild('avatarInput') avatarInput!: ElementRef<HTMLInputElement>;
 
   readonly Settings     = Settings;
   readonly User         = User;
@@ -322,7 +443,17 @@ export class SettingsComponent implements OnInit {
   readonly AlertTriangle = AlertTriangle;
   readonly Database     = Database;
   readonly Trash2       = Trash2;
+  readonly Edit2        = Edit2;
   readonly FlaskConical = FlaskConical;
+  readonly Eye          = Eye;
+  readonly Camera       = Camera;
+  readonly Shield       = Shield;
+  readonly Target       = Target;
+  readonly UserCheck    = UserCheck;
+  readonly CircleDollarSign = CircleDollarSign;
+  readonly MessageSquare = MessageSquare;
+  readonly BarChart2    = BarChart2;
+  readonly Briefcase    = Briefcase;
 
   tabs = [
     { key: 'profile', icon: User,        label: 'My Profile' },
@@ -339,34 +470,109 @@ export class SettingsComponent implements OnInit {
   constructor(
     private settingsSvc: SettingsService,
     private auth: AuthService,
-    private toast: ToastService,
-    private fb: FormBuilder
+    public toast: ToastService,
+    private fb: FormBuilder,
+    private router: Router
   ) {
-    this.profileForm = this.fb.group({ firstName: [''], lastName: [''], email: [''], phone: [''], department: [''], jobTitle: [''] });
+    this.profileForm = this.fb.group({ firstName: [''], lastName: [''], email: [''], phone: [''], department: [''], jobTitle: [''], avatarUrl: [''] });
     this.passwordForm = this.fb.group({ currentPassword: ['', Validators.required], newPassword: ['', [Validators.required, Validators.minLength(6)]], confirmPassword: ['', Validators.required] });
     this.userForm = this.fb.group({ firstName: ['', Validators.required], lastName: ['', Validators.required], email: ['', [Validators.required, Validators.email]], password: ['', [Validators.required, Validators.minLength(6)]], role: ['Sales Rep', Validators.required] });
     this.systemForm = this.fb.group({ companyName: ['Dhwiti CRM'], supportEmail: [''], timezone: ['Asia/Kolkata'] });
   }
 
   ngOnInit() {
-    const u = this.auth.getCurrentUser();
-    if (u) this.profileForm.patchValue(u);
+    this.settingsSvc.getProfile().subscribe({
+      next: (p) => {
+        this.profileForm.patchValue(p);
+        this.auth.updateCurrentUser(p); // Sync to storage
+      },
+      error: () => {
+        const u = this.auth.getCurrentUser();
+        if (u) this.profileForm.patchValue(u);
+      }
+    });
     this.loadUsers();
   }
 
   currentUser() { return this.auth.getCurrentUser(); }
   userInitials() { const u = this.currentUser(); return u ? `${u.firstName[0]}${u.lastName[0]}` : '?'; }
 
+  goTo(path: string) {
+    this.router.navigate([path]);
+  }
+
+  triggerAvatarUpload() {
+    this.avatarInput?.nativeElement?.click();
+  }
+
+  onAvatarSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => this.avatarPreview.set(e.target?.result as string);
+    reader.readAsDataURL(file);
+
+    // Upload to API
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.settingsSvc.uploadAvatar(formData).subscribe({
+      next: (res) => {
+        this.profileForm.patchValue({ avatarUrl: res.avatarUrl });
+        const currentUser = this.auth.getCurrentUser();
+        if (currentUser) {
+          currentUser.avatarUrl = res.avatarUrl;
+          this.auth.updateCurrentUser(currentUser); 
+        }
+        this.toast.success('Avatar Uploaded', 'Your profile photo has been successfully saved to the database!');
+      },
+      error: (e) => {
+        this.toast.error('Upload Failed', e.error?.message ?? 'Failed to upload the avatar to the database.');
+      }
+    });
+  }
+
+  deleteAvatar() {
+    if (!confirm('Are you sure you want to remove your profile photo?')) return;
+    this.settingsSvc.removeAvatar().subscribe({
+      next: () => {
+        this.avatarPreview.set(null);
+        this.profileForm.patchValue({ avatarUrl: null });
+        const currentUser = this.auth.getCurrentUser();
+        if (currentUser) {
+          currentUser.avatarUrl = undefined;
+          this.auth.updateCurrentUser(currentUser);
+        }
+        this.toast.success('Avatar Removed', 'Your profile photo has been deleted.');
+      },
+      error: (e) => {
+        this.toast.error('Remove Failed', e.error?.message ?? 'Could not remove avatar.');
+      }
+    });
+  }
+
   loadUsers() {
     this.settingsSvc.getAllUsers().subscribe({ next: (u: any[]) => this.users.set(u), error: () => { } });
   }
 
   saveProfile() {
+    if (this.profileForm.invalid) return;
     this.savingProfile.set(true);
-    this.settingsSvc.updateProfile(this.profileForm.value).subscribe({
+    const dto = { ...this.profileForm.value };
+    if (dto.phone === '') dto.phone = null;
+    
+    this.settingsSvc.updateProfile(dto).subscribe({
       next: () => {
         this.savingProfile.set(false);
         this.profileSuccess.set(true);
+        // Sync local storage
+        const current = this.auth.getCurrentUser();
+        if (current) {
+          const updated = { ...current, ...dto };
+          this.auth.updateCurrentUser(updated);
+        }
         this.toast.success('Profile Saved', 'Your profile was updated successfully.');
         setTimeout(() => this.profileSuccess.set(false), 3000);
       },
@@ -423,6 +629,43 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  startEditUser(u: any) {
+    this.editingUserId.set(u.id);
+    this.editingUserRole = u.roles?.[0] ?? 'Viewer';
+  }
+
+  cancelEditUser() {
+    this.editingUserId.set(null);
+  }
+
+  saveUserRole(u: any) {
+    if (!this.editingUserRole) return;
+    this.settingsSvc.updateUserRole(u.id, this.editingUserRole).subscribe({
+      next: () => {
+        u.roles = [this.editingUserRole];
+        this.toast.success('Role Updated', `${u.firstName}'s role was updated to ${this.editingUserRole}.`);
+        this.editingUserId.set(null);
+      },
+      error: (e: any) => {
+        this.toast.error('Update Failed', e.error?.message ?? 'Could not update role.');
+      }
+    });
+  }
+
+  deleteUser(u: any) {
+    if (!confirm(`WARNING: Are you sure you want to permanently delete user ${u.firstName} ${u.lastName}? This action cannot be undone.`)) return;
+    
+    this.settingsSvc.deleteUser(u.id).subscribe({
+      next: () => {
+        this.users.update(list => list.filter(x => x.id !== u.id));
+        this.toast.success('User Deleted', `${u.firstName} ${u.lastName} has been deleted.`);
+      },
+      error: (e: any) => {
+        this.toast.error('Delete Failed', e.error?.message ?? 'Could not delete user.');
+      }
+    });
+  }
+
   saveSystem() {
     this.settingsSvc.updateCompanySettings(this.systemForm.value).subscribe({
       next: () => {
@@ -445,6 +688,21 @@ export class SettingsComponent implements OnInit {
       error: (e: any) => {
         this.seeding.set(false);
         this.toast.error('Seed Failed', e.error?.message ?? 'Could not seed demo data.');
+      }
+    });
+  }
+
+  fixPermissions() {
+    if (!confirm('This will reset permissions for Sales Rep, Manager, and Viewer roles to their defaults. Continue?')) return;
+    this.fixingPerms.set(true);
+    this.settingsSvc.seedDefaultPermissions().subscribe({
+      next: (res: any) => {
+        this.fixingPerms.set(false);
+        this.toast.success('Permissions Fixed! ✅', res.message ?? 'Role permissions have been updated successfully.');
+      },
+      error: (e: any) => {
+        this.fixingPerms.set(false);
+        this.toast.error('Fix Failed', e.error?.message ?? 'Could not fix permissions.');
       }
     });
   }

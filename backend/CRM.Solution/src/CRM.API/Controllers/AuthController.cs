@@ -125,5 +125,14 @@ namespace CRM.API.Controllers
 
             return Ok(response);
         }
+        [HttpGet("me")]
+        public IActionResult GetMe()
+        {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            var isInAdmin = User.IsInRole("Admin");
+            var isInAdminLower = User.IsInRole("admin");
+            var isInManager = User.IsInRole("Manager");
+            return Ok(new { claims, isInAdmin, isInAdminLower, isInManager, identityName = User.Identity?.Name });
+        }
     }
 }

@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompanyService } from '../../core/services/company.service';
@@ -8,10 +9,12 @@ import {
   Edit2, Trash2, X, MapPin, Phone, Mail, FileText
 } from 'lucide-angular';
 
+import { AuthService } from '../../core/services/auth.service';
+
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, DatePipe],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, DatePipe, RouterModule],
   template: `
     <div class="animate-fadeIn page-container">
       <!-- Header -->
@@ -25,7 +28,7 @@ import {
             <lucide-icon [img]="Search" class="search-icon"></lucide-icon>
             <input type="text" placeholder="Search companies..." [value]="searchQuery()" (input)="onSearch($event)">
           </div>
-          <button class="btn btn-primary" (click)="openModal()"><lucide-icon [img]="Plus" class="btn-icon"></lucide-icon> New Company</button>
+          <button *ngIf="canCreate" class="btn btn-primary btn-md" (click)="openModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> New Company</button>
         </div>
       </div>
 
@@ -43,11 +46,11 @@ import {
               <th>Contact Info</th>
               <th>Owner</th>
               <th>Created</th>
-              <th class="text-right">Actions</th>
+              <th class="text-right" *ngIf="canEdit || canDelete">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let c of companies()">
+            <tr *ngFor="let c of companies()" [class.cursor-pointer]="canEdit" (click)="canEdit ? openModal(c) : null">
               <td>
                 <div class="flex items-center gap-3">
                   <div class="avatar-bg"><lucide-icon [img]="Building2" class="w-5 h-5 text-accent"></lucide-icon></div>
@@ -58,8 +61,15 @@ import {
                 </div>
               </td>
               <td>
-                <div class="text-sm flex items-center gap-2 mb-1"><lucide-icon [img]="Mail" class="w-3 h-3 text-muted"></lucide-icon> {{ c.email || '—' }}</div>
-                <div class="text-sm flex items-center gap-2"><lucide-icon [img]="Phone" class="w-3 h-3 text-muted"></lucide-icon> {{ c.phoneNo || '—' }}</div>
+                <div class="flex items-center gap-3">
+                  <a *ngIf="c.phoneNo" [href]="'tel:' + c.phoneNo" (click)="$event.stopPropagation()" class="text-secondary hover:text-primary transition" title="Call {{c.phoneNo}}">
+                    <lucide-icon [img]="Phone" class="w-4 h-4"></lucide-icon>
+                  </a>
+                  <a *ngIf="c.email" routerLink="/emails" [queryParams]="{composeTo: c.email}" (click)="$event.stopPropagation()" class="text-secondary hover:text-primary transition" title="Email {{c.email}}">
+                    <lucide-icon [img]="Mail" class="w-4 h-4"></lucide-icon>
+                  </a>
+                  <span *ngIf="!c.phoneNo && !c.email" class="text-xs text-muted">—</span>
+                </div>
               </td>
               <td>
                 <div class="text-sm" *ngIf="c.ownerFirstName">{{ c.ownerFirstName }} {{ c.ownerLastName }}</div>
@@ -68,10 +78,10 @@ import {
               <td>
                 <div class="text-sm">{{ c.createdDate | date:'mediumDate' }}</div>
               </td>
-              <td class="text-right">
+              <td class="text-right" *ngIf="canEdit || canDelete">
                 <div class="action-buttons">
-                  <button class="action-btn" (click)="openModal(c)" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
-                  <button class="action-btn text-danger" (click)="deleteCompany(c.id)" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
+                  <button *ngIf="canEdit" class="action-btn" (click)="openModal(c); $event.stopPropagation()" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
+                  <button *ngIf="canDelete" class="action-btn text-danger" (click)="deleteCompany(c.id); $event.stopPropagation()" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
                 </div>
               </td>
             </tr>
@@ -83,7 +93,7 @@ import {
           <div class="empty-icon"><lucide-icon [img]="Building2"></lucide-icon></div>
           <h3>No companies found</h3>
           <p class="text-muted">You haven't added any company yet or no results match your search.</p>
-          <button class="btn btn-primary mt-4" (click)="openModal()">Add Company</button>
+          <button *ngIf="canCreate" class="btn btn-primary mt-4" (click)="openModal()">Add Company</button>
         </div>
       </div>
 
@@ -225,9 +235,15 @@ import {
     .text-accent { color: var(--accent); }
     
     .action-buttons { display: flex; gap: 0.5rem; justify-content: flex-end; }
-    .action-btn { background: none; border: none; padding: 0.4rem; border-radius: 6px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .action-btn { background: none; border: none; padding: 0.4rem; border-radius: 6px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-decoration: none; }
     .action-btn:hover { background: var(--bg-secondary); color: var(--accent); }
     .action-btn.text-danger:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+    .btn-md { padding: 0.55rem 1.1rem; font-size: 0.875rem; }
+    .co-link { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; padding: 0.2rem 0; text-decoration: none; transition: 0.15s; }
+    .email-lnk { color: var(--accent); &:hover { text-decoration: underline; } }
+    .phone-lnk { color: #10b981; &:hover { text-decoration: underline; } }
+    .mb-1 { margin-bottom: 0.3rem; }
+    .block { display: flex; }
 
     /* Modal Form Styles */
     .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
@@ -277,6 +293,9 @@ export class CompaniesComponent implements OnInit {
   saving = signal(false);
 
   form: FormGroup;
+  canCreate = false;
+  canEdit = false;
+  canDelete = false;
 
   readonly Search = Search;
   readonly Plus = Plus;
@@ -293,8 +312,13 @@ export class CompaniesComponent implements OnInit {
 
   constructor(
     private companyService: CompanyService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) {
+    this.canCreate = this.authService.hasPermission('Companies', 'Create');
+    this.canEdit = this.authService.hasPermission('Companies', 'Update');
+    this.canDelete = this.authService.hasPermission('Companies', 'Delete');
+
     this.form = this.fb.group({
       companyName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.email]],

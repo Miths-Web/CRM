@@ -35,10 +35,10 @@ namespace CRM.API.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> SendEmail([FromBody] CreateEmailDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
             try
             {
                 var createdEmail = await _emailService.SendEmailAsync(model);
@@ -48,6 +48,30 @@ namespace CRM.API.Controllers
             {
                 return BadRequest(new { Message = ex.Message });
             }
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var success = await _emailService.DeleteEmailAsync(id);
+            if (!success) return NotFound(new { Message = "Email not found." });
+            return NoContent();
+        }
+
+        [HttpPatch("{id:guid}/star")]
+        public async Task<IActionResult> ToggleStar(Guid id)
+        {
+            var email = await _emailService.ToggleStarAsync(id);
+            if (email == null) return NotFound();
+            return Ok(email);
+        }
+
+        [HttpPatch("{id:guid}/archive")]
+        public async Task<IActionResult> Archive(Guid id)
+        {
+            var email = await _emailService.ArchiveEmailAsync(id);
+            if (email == null) return NotFound();
+            return Ok(email);
         }
     }
 }

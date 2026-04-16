@@ -21,7 +21,8 @@ namespace CRM.Domain.Entities
         // Account Lockout
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutEnd { get; set; }
-
+        public bool IsDelete { get; set; } = false;
+        // Bypassing smart app control WDAC block
         public ICollection<Role> Roles { get; set; } = new List<Role>();
     }
 }

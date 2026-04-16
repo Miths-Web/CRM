@@ -9,7 +9,7 @@ namespace CRM.Domain.Entities
         public string InvoiceNumber { get; set; } = string.Empty; // INV-2024-0001
         public Guid OrderId { get; set; }
         public Guid CustomerId { get; set; }
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public Guid? BillingAddressId { get; set; }
         public DateTime InvoiceDate { get; set; } = DateTime.UtcNow;
         public DateTime DueDate { get; set; }

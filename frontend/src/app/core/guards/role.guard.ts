@@ -3,8 +3,6 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Role Guard — Sirf allowed roles wale users hi route access kar sakte hain.
- *
  * Usage in routes:
  *   canActivate: [authGuard, roleGuard(['Admin'])]
  *   canActivate: [authGuard, roleGuard(['Admin', 'Manager'])]

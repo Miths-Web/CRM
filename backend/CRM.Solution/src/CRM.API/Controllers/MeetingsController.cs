@@ -61,14 +61,19 @@ namespace CRM.API.Controllers
 
             return Ok(new
             {
-                meeting.Id,
-                meeting.Title,
-                meeting.RoomCode,
+                id = meeting.Id,
+                title = meeting.Title,
+                jitsiRoomName = meeting.RoomCode,
+                startTime = meeting.ScheduledAt,
+                endTime = meeting.ScheduledAt.AddMinutes(meeting.DurationMinutes),
+                status = meeting.Status,
+                description = meeting.Description,
+                hostUserId = meeting.HostUserId,
+                contactId = meeting.RelatedCustomerId,
+                dealId = meeting.RelatedDealId,
+                createdAt = meeting.CreatedAt,
+
                 MeetingUrl       = jitsiUrl,
-                meeting.Password,
-                meeting.ScheduledAt,
-                meeting.DurationMinutes,
-                // Direct links for sharing
                 HostLink         = $"{jitsiUrl}#config.startWithVideoMuted=false",
                 GuestLink        = jitsiUrl,
                 CalendarLink     = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={Uri.EscapeDataString(dto.Title)}&details={Uri.EscapeDataString($"Join: {jitsiUrl}")}&dates={dto.ScheduledAt:yyyyMMddTHHmmssZ}"
@@ -92,13 +97,19 @@ namespace CRM.API.Controllers
                 .OrderByDescending(m => m.ScheduledAt)
                 .Select(m => new
                 {
-                    m.Id, m.Title, m.JitsiUrl,
-                    // BUG-020 FIX: Password list mein nahi — sirf GetById mein milegi
-                    HasPassword  = m.Password != null,
-                    m.ScheduledAt, m.DurationMinutes, m.Status,
-                    HostName     = m.HostUser != null ? $"{m.HostUser.FirstName} {m.HostUser.LastName}" : null,
-                    CustomerName = m.RelatedCustomer != null ? $"{m.RelatedCustomer.FirstName} {m.RelatedCustomer.LastName}" : null,
-                    DealTitle    = m.RelatedDeal != null ? m.RelatedDeal.Title : null
+                    id = m.Id, 
+                    title = m.Title, 
+                    jitsiRoomName = m.RoomCode,
+                    startTime = m.ScheduledAt, 
+                    endTime = m.ScheduledAt.AddMinutes(m.DurationMinutes),
+                    status = m.Status,
+                    description = m.Description,
+                    hostUserId = m.HostUserId,
+                    hostName     = m.HostUser != null ? $"{m.HostUser.FirstName} {m.HostUser.LastName}" : null,
+                    contactId = m.RelatedCustomerId,
+                    dealId = m.RelatedDealId,
+                    createdAt = m.CreatedAt,
+                    HasPassword  = m.Password != null
                 })
                 .ToListAsync();
 
@@ -119,12 +130,20 @@ namespace CRM.API.Controllers
 
             return Ok(new
             {
-                meeting.Id, meeting.Title, meeting.RoomCode, meeting.JitsiUrl,
-                meeting.Password, meeting.ScheduledAt, meeting.DurationMinutes,
-                meeting.Status, meeting.Description, meeting.RecordingUrl,
-                HostName     = meeting.HostUser != null ? $"{meeting.HostUser.FirstName} {meeting.HostUser.LastName}" : null,
-                CustomerName = meeting.RelatedCustomer != null ? $"{meeting.RelatedCustomer.FirstName} {meeting.RelatedCustomer.LastName}" : null,
-                DealTitle    = meeting.RelatedDeal?.Title,
+                id = meeting.Id, 
+                title = meeting.Title, 
+                jitsiRoomName = meeting.RoomCode,
+                startTime = meeting.ScheduledAt, 
+                endTime = meeting.ScheduledAt.AddMinutes(meeting.DurationMinutes),
+                status = meeting.Status,
+                description = meeting.Description,
+                hostUserId = meeting.HostUserId,
+                hostName     = meeting.HostUser != null ? $"{meeting.HostUser.FirstName} {meeting.HostUser.LastName}" : null,
+                contactId = meeting.RelatedCustomerId,
+                dealId = meeting.RelatedDealId,
+                createdAt = meeting.CreatedAt,
+
+                meeting.JitsiUrl, meeting.Password, meeting.RecordingUrl,
                 // Share-ready links
                 JoinLink     = meeting.JitsiUrl,
                 GoogleCalendar = $"https://calendar.google.com/calendar/render?action=TEMPLATE&text={Uri.EscapeDataString(meeting.Title)}&details=Join+Meeting:+{Uri.EscapeDataString(meeting.JitsiUrl)}"

@@ -9,7 +9,7 @@ namespace CRM.Domain.Entities
         public string OrderNumber { get; set; } = string.Empty;  // ORD-2024-0001
         public Guid? DealId { get; set; }
         public Guid CustomerId { get; set; }
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public DateTime? ExpectedDelivery { get; set; }
         public string Status { get; set; } = "Pending";

@@ -32,12 +32,16 @@ namespace CRM.Infrastructure.Services
 
         public async Task<IReadOnlyList<DealDto>> GetPagedDealsByUserAsync(Guid userId, int pageNumber, int pageSize)
         {
-            // Issue #3 FIX: Sirf is user ko assigned deals return karo
+            // Issue #3 FIX: Sirf is user ko assigned deals return karo + Includes (Company, Stage, Customer)
             var all = await _dealRepository.FindAsync(d => d.AssignedToUserId == userId);
-            return all
-                .OrderByDescending(d => d.CreatedAt)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+            
+            // To properly load navigation properties for the DTO (StageName, CompanyName, etc.)
+            // We fetch with includes by ID for each deal or use a more efficient way if FindAsync allowed includes.
+            // For now, let's map carefully or use GetPagedDealsWithIncludesAsync logic.
+            
+            var deals = await _dealRepository.GetPagedDealsWithIncludesAsync(pageNumber, pageSize);
+            return deals
+                .Where(d => d.AssignedToUserId == userId)
                 .Select(MapToDto)
                 .ToList();
         }
@@ -74,10 +78,14 @@ namespace CRM.Infrastructure.Services
             deal.Probability       = updateDto.Probability;
             deal.ExpectedCloseDate = updateDto.ExpectedCloseDate;
             deal.Status            = updateDto.Status;
-            deal.CustomerId        = updateDto.CustomerId;    // Updated
-            deal.CompanyId         = updateDto.CompanyId;     // Updated
+            deal.CustomerId        = updateDto.CustomerId;
+            deal.CompanyId         = updateDto.CompanyId;
             deal.Description       = updateDto.Description;
-            deal.AssignedToUserId  = updateDto.AssignedToUserId;
+            
+            // BUG FIX: Agar updateDto mein Assigned User nahi hai toh purana wala hi rehne do
+            if (updateDto.AssignedToUserId != null && updateDto.AssignedToUserId != Guid.Empty)
+                deal.AssignedToUserId = updateDto.AssignedToUserId;
+            
             deal.UpdatedAt         = DateTime.UtcNow;
             await _dealRepository.UpdateAsync(deal);
         }

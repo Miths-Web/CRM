@@ -126,6 +126,12 @@ namespace CRM.Infrastructure.Services
 
             var expiryMinutes = int.TryParse(_config["Jwt:DurationInMinutes"], out var m) ? m : 60;
 
+            var roleIds = user.Roles.Select(r => r.Id).ToList();
+            var permissions = await _context.RolePermissions
+                .Where(p => roleIds.Contains(p.RoleId))
+                .Select(p => p.Module + "." + p.Permission)
+                .ToListAsync();
+
             return new AuthResponseDto
             {
                 Success      = true,
@@ -140,7 +146,8 @@ namespace CRM.Infrastructure.Services
                     LastName  = user.LastName,
                     Email     = user.Email,
                     AvatarUrl = user.AvatarUrl,
-                    Roles     = user.Roles.Select(r => r.Name).ToArray()
+                    Roles     = user.Roles.Select(r => r.Name).ToArray(),
+                    Permissions = permissions.ToArray()
                 }
             };
         }
@@ -153,6 +160,12 @@ namespace CRM.Infrastructure.Services
 
             if (user == null) return null;
 
+            var roleIds = user.Roles.Select(r => r.Id).ToList();
+            var permissions = await _context.RolePermissions
+                .Where(p => roleIds.Contains(p.RoleId))
+                .Select(p => p.Module + "." + p.Permission)
+                .ToListAsync();
+
             return new UserProfileDto
             {
                 Id        = user.Id,
@@ -160,7 +173,8 @@ namespace CRM.Infrastructure.Services
                 LastName  = user.LastName,
                 Email     = user.Email,
                 AvatarUrl = user.AvatarUrl,
-                Roles     = user.Roles.Select(r => r.Name).ToArray()
+                Roles     = user.Roles.Select(r => r.Name).ToArray(),
+                Permissions = permissions.ToArray()
             };
         }
 

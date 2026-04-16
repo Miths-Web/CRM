@@ -19,26 +19,26 @@ namespace CRM.API.Controllers
         [HttpDelete("clear-all")]
         public async Task<IActionResult> ClearAllData()
         {
-            _context.AuditLogs.RemoveRange(_context.AuditLogs);
-            _context.LiveChatMessages.RemoveRange(_context.LiveChatMessages);
-            _context.LiveChatSessions.RemoveRange(_context.LiveChatSessions);
-            _context.ChatMessages.RemoveRange(_context.ChatMessages);
-            _context.Documents.RemoveRange(_context.Documents);
-            _context.Notes.RemoveRange(_context.Notes);
-            _context.Emails.RemoveRange(_context.Emails);
-            _context.Events.RemoveRange(_context.Events);
-            _context.CrmTasks.RemoveRange(_context.CrmTasks);
-            _context.Payments.RemoveRange(_context.Payments);
-            _context.Invoices.RemoveRange(_context.Invoices);
-            _context.OrderItems.RemoveRange(_context.OrderItems);
-            _context.Orders.RemoveRange(_context.Orders);
-            _context.Products.RemoveRange(_context.Products);
-            _context.Deals.RemoveRange(_context.Deals);
-            _context.Leads.RemoveRange(_context.Leads);
-            _context.CustomerAddresses.RemoveRange(_context.CustomerAddresses);
-            _context.Customers.RemoveRange(_context.Customers);
-            _context.Companies.RemoveRange(_context.Companies);
-            await _context.SaveChangesAsync();
+            await _context.AuditLogs.ExecuteDeleteAsync();
+            await _context.LiveChatMessages.ExecuteDeleteAsync();
+            await _context.LiveChatSessions.ExecuteDeleteAsync();
+            await _context.ChatMessages.ExecuteDeleteAsync();
+            await _context.Documents.ExecuteDeleteAsync();
+            await _context.Notes.ExecuteDeleteAsync();
+            await _context.Emails.ExecuteDeleteAsync();
+            await _context.Events.ExecuteDeleteAsync();
+            await _context.CrmTasks.ExecuteDeleteAsync();
+            await _context.Payments.ExecuteDeleteAsync();
+            await _context.Invoices.ExecuteDeleteAsync();
+            await _context.OrderItems.ExecuteDeleteAsync();
+            await _context.Orders.ExecuteDeleteAsync();
+            await _context.Products.ExecuteDeleteAsync();
+            await _context.Deals.ExecuteDeleteAsync();
+            await _context.Leads.ExecuteDeleteAsync();
+            await _context.CustomerAddresses.ExecuteDeleteAsync();
+            await _context.Customers.ExecuteDeleteAsync();
+            await _context.Companies.ExecuteDeleteAsync();
+            
             return Ok(new { message = "All business data cleared. Users and roles preserved." });
         }
 

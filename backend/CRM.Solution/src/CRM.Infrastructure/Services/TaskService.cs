@@ -1,4 +1,4 @@
-﻿using CRM.Application.Common.Exceptions;
+using CRM.Application.Common.Exceptions;
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Features.Tasks.DTOs;
 using CRM.Domain.Entities;
@@ -74,10 +74,22 @@ namespace CRM.Infrastructure.Services
             task.Type             = dto.Type;
             task.DueDate          = dto.DueDate;
             task.AssignedToUserId = dto.AssignedToUserId;
-            task.CustomerId = dto.CustomerId;
+            task.CustomerId       = dto.CustomerId;
             task.LeadId           = dto.LeadId;
             task.DealId           = dto.DealId;
             task.UpdatedAt        = DateTime.UtcNow;
+
+            if (dto.Status == TaskStatus.Completed)
+            {
+                task.IsCompleted = true;
+                if (!task.CompletedAt.HasValue) task.CompletedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                task.IsCompleted = false;
+                task.CompletedAt = null;
+            }
+
             await _context.SaveChangesAsync();
         }
 
@@ -135,6 +147,7 @@ namespace CRM.Infrastructure.Services
             IsCompleted      = t.IsCompleted,
             CompletedAt      = t.CompletedAt,
             AssignedToUserId = t.AssignedToUserId,
+            AssignedToUserName = t.AssignedToUser != null ? t.AssignedToUser.FirstName + " " + t.AssignedToUser.LastName : null,
             CustomerId = t.CustomerId,
             LeadId           = t.LeadId,
             DealId           = t.DealId,

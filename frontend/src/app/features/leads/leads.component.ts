@@ -1,11 +1,13 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { LeadService, Lead, CreateLeadDto } from './services/lead.service';
 import { DataTableComponent, TableColumn } from '../../shared/components/data-table/data-table.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from 'lucide-angular';
+import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap, Mail } from 'lucide-angular';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-leads',
@@ -18,7 +20,7 @@ import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from
           <h2 class="page-title">Leads</h2>
           <p class="page-subtitle">Track and convert your leads into customers</p>
         </div>
-        <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> Add Lead</button>
+        <button *ngIf="canCreate" class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> Add Lead</button>
       </div>
 
       <!-- Status Filter Tabs -->
@@ -32,10 +34,12 @@ import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from
 
       <div class="card" style="padding:0">
         <app-data-table [data]="filtered()" [columns]="columns" [pageSize]="15"
+                        [canEdit]="canEdit" [canDelete]="canDelete" [canEmail]="true"
                         searchPlaceholder="Search leads..."
                         emptyTitle="No leads found" emptyText="Add your first lead."
                         (onEdit)="openEditModal($event)"
-                        (onDelete)="confirmDelete($event)">
+                        (onDelete)="confirmDelete($event)"
+                        (onEmail)="emailLead($event)">
           <div toolbar-actions>
             <button class="btn btn-secondary btn-sm" (click)="load()"><lucide-icon [img]="RefreshCw" class="btn-icon-sm"></lucide-icon> Refresh</button>
           </div>
@@ -114,12 +118,25 @@ import { LucideAngularModule, Target, Plus, RefreshCw, AlertTriangle, Zap } from
                 <option value="Proposal">Proposal</option>
                 <option value="Negotiation">Negotiation</option>
                 <option value="Lost">Lost</option>
+                <option value="Converted">Converted</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:1rem" *ngIf="canAssign">
+            <div class="form-group">
+              <label class="form-label">Assign To</label>
+              <select formControlName="assignedToUserId" class="form-control">
+                <option [value]="null">-- Unassigned --</option>
+                <option *ngFor="let u of usersLookup()" [value]="u.id">{{u.name}}</option>
               </select>
             </div>
           </div>
           <div class="form-group" style="margin-top:1rem">
-            <label class="form-label">Notes / Description</label>
-            <textarea formControlName="description" class="form-control" rows="3" placeholder="Any additional notes..."></textarea>
+            <label class="form-label">Product Requirements / Details <span style="color:#ef4444">*</span></label>
+            <textarea formControlName="description" class="form-control" rows="3" 
+              [class.field-invalid]="isInvalid('description')"
+              placeholder="e.g., Needs 50 licenses of Premium software..."></textarea>
+            <div class="form-field-error" *ngIf="isInvalid('description')">Please provide lead requirements.</div>
           </div>
           <div *ngIf="error()" class="form-error mt-4">{{error()}}</div>
         </form>
@@ -163,6 +180,7 @@ export class LeadsComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   activeStatus = signal('All');
+  usersLookup = signal<{id: string, name: string}[]>([]);
 
   readonly Target = Target;
   readonly Plus = Plus;
@@ -173,22 +191,37 @@ export class LeadsComponent implements OnInit {
   statuses = ['All', 'New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Lost', 'Converted'];
 
   columns: TableColumn[] = [
-    { key: 'title', label: 'Title', sortable: true },
+    { key: 'title', label: 'Lead Subject', sortable: true },
     { key: 'company', label: 'Company', sortable: true },
     { key: 'email', label: 'Email' },
+    { key: 'description', label: 'Requirements' },
     { key: 'estimatedValue', label: 'Value', type: 'currency' },
     { key: 'source', label: 'Source' },
     {
       key: 'status', label: 'Status', type: 'badge', sortable: true,
       badgeMap: { New: 'badge-blue', Contacted: 'badge-yellow', Qualified: 'badge-green', Proposal: 'badge-purple', Negotiation: 'badge-yellow', Lost: 'badge-red', Converted: 'badge-green' }
     },
-    { key: 'createdAt', label: 'Created', type: 'date' },
-    { key: 'actions', label: '', type: 'actions', width: '100px' }
+    { key: 'createdAt', label: 'Date', type: 'date' },
+    { key: 'actions', label: '', type: 'actions', width: '130px' }
   ];
 
   form: FormGroup;
+  canCreate = false;
+  canEdit = false;
+  canDelete = false;
+  canAssign = false;
 
-  constructor(private leadService: LeadService, private fb: FormBuilder) {
+  constructor(private leadService: LeadService, private authService: AuthService, private fb: FormBuilder, private router: Router) {
+    let roles: string[] = [];
+    this.authService.currentUser$.subscribe(user => {
+      roles = user?.roles || [];
+    });
+    const isSalesRep = roles.includes('Sales Rep');
+    this.canCreate = this.authService.hasPermission('Leads', 'Create') || isSalesRep;
+    this.canEdit = this.authService.hasPermission('Leads', 'Update') || isSalesRep;
+    this.canDelete = this.authService.hasPermission('Leads', 'Delete');
+    this.canAssign = true; // Backend securely filters dropdown options based on role
+
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       firstName: [''], lastName: [''],
@@ -196,7 +229,8 @@ export class LeadsComponent implements OnInit {
       phone: ['', [Validators.pattern(/^[0-9+\-\s]{7,15}$/)]], 
       company: [''],
       estimatedValue: [null, [Validators.min(0)]],
-      source: ['Website'], status: ['New'], description: ['']
+      source: ['Website'], status: ['New'], description: ['', Validators.required],
+      assignedToUserId: [null]
     });
   }
 
@@ -209,7 +243,12 @@ export class LeadsComponent implements OnInit {
     return /[0-9+\-\s]/.test(event.key);
   }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { 
+    this.load(); 
+    if (this.canAssign) {
+      this.leadService.getUsersLookup().subscribe({ next: users => this.usersLookup.set(users) });
+    }
+  }
   load() { this.leadService.getPaged().subscribe({ next: d => { this.leads.set(d); this.filterLeads(); } }); }
 
   filterLeads() {
@@ -219,6 +258,14 @@ export class LeadsComponent implements OnInit {
 
   getCount(s: string) { return s === 'All' ? this.leads().length : this.leads().filter(l => l.status === s).length; }
 
+  emailLead(lead: Lead) {
+    if (lead.email) {
+      this.router.navigate(['/emails'], { queryParams: { composeTo: lead.email } });
+    } else {
+      alert('This lead does not have an email address.');
+    }
+  }
+
   openCreateModal() { this.editingId.set(null); this.form.reset({ source: 'Website', status: 'New' }); this.error.set(''); this.showModal.set(true); }
   openEditModal(l: Lead) { this.editingId.set(l.id); this.form.patchValue(l); this.error.set(''); this.showModal.set(true); }
   closeModal() { this.showModal.set(false); }
@@ -227,6 +274,9 @@ export class LeadsComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true); this.error.set('');
     const dto = this.form.value as CreateLeadDto;
+    if (dto.assignedToUserId === 'null' || !dto.assignedToUserId) {
+        dto.assignedToUserId = undefined; 
+    }
     const obs: any = this.editingId() ? this.leadService.update(this.editingId()!, dto) : this.leadService.create(dto);
     obs.subscribe({ next: () => { this.saving.set(false); this.closeModal(); this.load(); }, error: (e: any) => { this.saving.set(false); this.error.set(e.message); } });
   }

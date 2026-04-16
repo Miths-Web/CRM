@@ -183,17 +183,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Work',
       items: [
         { label: 'Tasks', icon: CheckSquare, path: '/tasks', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent', 'Viewer'] },
-        { label: 'Calendar', icon: Calendar, path: '/calendar', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent', 'Viewer'] },
-        { label: 'Emails', icon: Mail, path: '/emails', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent'] },
-        { label: 'Notes', icon: FileText, path: '/notes', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent', 'Viewer'] },
+        { label: 'Emails', icon: Mail, path: '/emails', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent'] }
       ]
     },
     {
       label: 'Communication',
       items: [
-        { label: 'Team Chat', icon: MessageSquare, path: '/chat', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent', 'Viewer'] },
-        { label: 'Meetings', icon: Video, path: '/meetings', roles: ['Admin', 'Manager', 'Sales Rep', 'Viewer'] },
-        { label: 'Live Chat', icon: Headset, path: '/live-chat', roles: ['Admin', 'Manager', 'Sales Rep', 'Support Agent'] },
+        { label: 'Meetings', icon: Video, path: '/meetings', roles: ['Admin', 'Manager', 'Sales Rep', 'Viewer'] }
       ]
     },
     {

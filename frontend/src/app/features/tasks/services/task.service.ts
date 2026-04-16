@@ -5,7 +5,7 @@ import { ApiService } from '../../../core/services/api.service';
 export interface CrmTask {
     id: string; title: string; description?: string; dueDate?: string;
     priority: string; status: string; isCompleted: boolean;
-    assignedToUserId?: string; customerId?: string; relatedDealId?: string;
+    assignedToUserId?: string; assignedToUserName?: string; customerId?: string; relatedDealId?: string;
     createdAt: string;
 }
 export interface CreateTaskDto {
@@ -23,6 +23,6 @@ export class TaskService {
     getOverdue(): Observable<CrmTask[]> { return this.api.get<CrmTask[]>('tasks/overdue'); }
     create(dto: CreateTaskDto): Observable<CrmTask> { return this.api.post<CrmTask>('tasks', dto); }
     update(id: string, dto: CreateTaskDto): Observable<void> { return this.api.put<void>(`tasks/${id}`, dto); }
-    updateStatus(id: string, status: string): Observable<void> { return this.api.put<void>(`tasks/${id}/status`, status); }
+    updateStatus(id: string, status: string): Observable<void> { return this.api.put<void>(`tasks/${id}/status`, { status }); }
     delete(id: string): Observable<void> { return this.api.delete<void>(`tasks/${id}`); }
 }

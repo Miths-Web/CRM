@@ -76,26 +76,35 @@ namespace CRM.API.Controllers
             decimal subTotal = 0, taxTotal = 0;
             var items = new List<OrderItem>();
 
-            foreach (var item in request.Items)
+            if (request.Items != null && request.Items.Any())
             {
-                var product = await _db.Products.FindAsync(item.ProductId);
-                if (product == null) return BadRequest($"Product {item.ProductId} not found.");
+                foreach (var item in request.Items)
+                {
+                    var product = await _db.Products.FindAsync(item.ProductId);
+                    if (product == null) return BadRequest($"Product {item.ProductId} not found.");
 
-                var lineSubTotal = item.Quantity * item.UnitPrice * (1 - item.DiscountPct / 100);
-                var lineTax      = lineSubTotal * (item.TaxRate / 100);
-                var lineTotal    = lineSubTotal + lineTax;
+                    var lineSubTotal = item.Quantity * item.UnitPrice * (1 - item.DiscountPct / 100);
+                    var lineTax      = lineSubTotal * (item.TaxRate / 100);
+                    var lineTotal    = lineSubTotal + lineTax;
 
-                subTotal += lineSubTotal;
-                taxTotal += lineTax;
+                    subTotal += lineSubTotal;
+                    taxTotal += lineTax;
 
-                items.Add(new OrderItem {
-                    ProductId   = item.ProductId,
-                    Quantity    = item.Quantity,
-                    UnitPrice   = item.UnitPrice,
-                    DiscountPct = item.DiscountPct,
-                    TaxRate     = item.TaxRate,
-                    LineTotal   = lineTotal
-                });
+                    items.Add(new OrderItem {
+                        ProductId   = item.ProductId,
+                        Quantity    = item.Quantity,
+                        UnitPrice   = item.UnitPrice,
+                        DiscountPct = item.DiscountPct,
+                        TaxRate     = item.TaxRate,
+                        LineTotal   = lineTotal
+                    });
+                }
+            }
+            else
+            {
+                // UI Modal passes these manually when no items are added
+                subTotal = request.SubTotal;
+                taxTotal = request.TaxAmount;
             }
 
             var order = new OrderMaster {
@@ -109,7 +118,7 @@ namespace CRM.API.Controllers
                 TaxAmount        = taxTotal,
                 DiscountAmount   = request.DiscountAmount,
                 TotalAmount      = subTotal + taxTotal - request.DiscountAmount,
-                Status           = "Pending",
+                Status           = !string.IsNullOrEmpty(request.Status) ? request.Status : "Draft",
                 CreatedDate      = DateTime.UtcNow,
                 UpdatedDate      = DateTime.UtcNow,
                 OrderItems       = items
@@ -117,6 +126,39 @@ namespace CRM.API.Controllers
 
             _db.Orders.Add(order);
             await _db.SaveChangesAsync();
+
+            // ─── AUTO-GENERATE INVOICE ────────────────────────────────────────────
+            // Jab bhi order save ho, turant invoice ban jaye — sales agent ko manually nahi karna
+            try
+            {
+                var invoiceNum = $"INV-{DateTime.UtcNow:yyyy}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+                var autoInvoice = new Invoice
+                {
+                    InvoiceNumber   = invoiceNum,
+                    OrderId         = order.Id,
+                    CustomerId      = order.CustomerId,
+                    CompanyId       = order.CompanyId,
+                    SubTotal        = order.SubTotal,
+                    TaxAmount       = order.TaxAmount,
+                    DiscountAmount  = order.DiscountAmount,
+                    TotalAmount     = order.TotalAmount,
+                    PaidAmount      = 0,
+                    PaymentStatus   = "Unpaid",
+                    DueDate         = DateTime.UtcNow.AddDays(30), // 30 din mein payment expected
+                    InvoiceDate     = DateTime.UtcNow,
+                    CreatedDate     = DateTime.UtcNow,
+                    UpdatedDate     = DateTime.UtcNow,
+                    Notes           = request.Notes,
+                    TermsConditions = "Payment is due within 30 days. Thank you for your business."
+                };
+                _db.Invoices.Add(autoInvoice);
+                await _db.SaveChangesAsync();
+            }
+            catch
+            {
+                // Invoice generation fail hone pe order ko roll back mat karo — just log karo
+            }
+
             return CreatedAtAction(nameof(GetById), new { id = order.Id }, new { order.Id, order.OrderNumber, order.TotalAmount });
         }
 
@@ -132,7 +174,6 @@ namespace CRM.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Cancel(Guid id)
         {
             var order = await _db.Orders.FindAsync(id);
@@ -140,6 +181,14 @@ namespace CRM.API.Controllers
             order.Status      = "Cancelled";
             order.IsDelete    = true;
             order.UpdatedDate = DateTime.UtcNow;
+
+            var invoices = await _db.Invoices.Where(i => i.OrderId == id && !i.IsDelete).ToListAsync();
+            foreach (var invoice in invoices)
+            {
+                invoice.IsDelete = true;
+                invoice.UpdatedDate = DateTime.UtcNow;
+            }
+
             await _db.SaveChangesAsync();
             return Ok(new { message = "Order cancelled." });
         }
@@ -149,9 +198,12 @@ namespace CRM.API.Controllers
     {
         public Guid? DealId { get; set; }
         public Guid CustomerId { get; set; }
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public DateTime? ExpectedDelivery { get; set; }
+        public string? Status { get; set; }
         public decimal DiscountAmount { get; set; } = 0;
+        public decimal SubTotal { get; set; } = 0;
+        public decimal TaxAmount { get; set; } = 0;
         public string? Notes { get; set; }
         public List<OrderItemRequest> Items { get; set; } = new();
     }

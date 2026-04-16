@@ -8,6 +8,8 @@ import {
   Tag, AlignLeft, Percent, DollarSign, Layers
 } from 'lucide-angular';
 
+import { AuthService } from '../../core/services/auth.service';
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -24,7 +26,7 @@ import {
             <lucide-icon [img]="Search" class="search-icon"></lucide-icon>
             <input type="text" placeholder="Search products..." [value]="searchQuery()" (input)="onSearch($event)">
           </div>
-          <button class="btn btn-primary" (click)="openModal()"><lucide-icon [img]="Plus" class="btn-icon"></lucide-icon> Add Product</button>
+          <button *ngIf="canCreate" class="btn btn-primary" (click)="openModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> Add Product</button>
         </div>
       </div>
 
@@ -41,7 +43,7 @@ import {
               <th>Unit Price</th>
               <th>Tax Rate</th>
               <th>Status</th>
-              <th class="text-right">Actions</th>
+              <th class="text-right" *ngIf="canEdit || canDelete">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -63,10 +65,10 @@ import {
                   {{ p.isActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
-              <td class="text-right">
+              <td class="text-right" *ngIf="canEdit || canDelete">
                 <div class="action-buttons">
-                  <button class="action-btn" (click)="openModal(p)" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
-                  <button class="action-btn text-danger" (click)="deleteProduct(p.id)" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
+                  <button *ngIf="canEdit" class="action-btn" (click)="openModal(p)" title="Edit"><lucide-icon [img]="Edit2" class="w-4 h-4"></lucide-icon></button>
+                  <button *ngIf="canDelete" class="action-btn text-danger" (click)="deleteProduct(p.id)" title="Delete"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
                 </div>
               </td>
             </tr>
@@ -78,7 +80,7 @@ import {
           <div class="empty-icon"><lucide-icon [img]="Package"></lucide-icon></div>
           <h3>No products found</h3>
           <p class="text-muted">You haven't added any products to your catalog yet.</p>
-          <button class="btn btn-primary mt-4" (click)="openModal()">Add Product</button>
+          <button *ngIf="canCreate" class="btn btn-primary mt-4" (click)="openModal()">Add Product</button>
         </div>
       </div>
 
@@ -238,6 +240,9 @@ export class ProductsComponent implements OnInit {
   saving = signal(false);
 
   form: FormGroup;
+  canCreate = false;
+  canEdit = false;
+  canDelete = false;
 
   readonly Search = Search;
   readonly Plus = Plus;
@@ -253,8 +258,13 @@ export class ProductsComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) {
+    this.canCreate = this.authService.hasPermission('Products', 'Create');
+    this.canEdit = this.authService.hasPermission('Products', 'Update');
+    this.canDelete = this.authService.hasPermission('Products', 'Delete');
+
     this.form = this.fb.group({
       productName: ['', [Validators.required, Validators.minLength(2)]],
       sku: [''],

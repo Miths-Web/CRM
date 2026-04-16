@@ -1,0 +1,118 @@
+<div class="roles-container">
+  <div class="page-header">
+    <div class="header-left">
+      <div class="icon-container bg-purple"><lucide-icon [img]="Shield"></lucide-icon></div>
+      <div>
+        <h1>Roles & Permissions</h1>
+        <p class="text-muted">Configure access levels and granular module permissions.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openRoleModal()">
+        <lucide-icon [img]="Plus" size="18"></lucide-icon> Create Role
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading roles and permissions...</p>
+  </div>
+
+  <div class="roles-grid" *ngIf="!isLoading">
+    <div class="role-card" *ngFor="let role of roles">
+      <div class="role-header">
+        <div class="role-info">
+          <h3>{{ role.name }}</h3>
+          <p class="text-muted">{{ role.description || 'No description provided.' }}</p>
+        </div>
+        <div class="role-actions">
+          <button class="icon-btn" (click)="openRoleModal(role)" title="Edit Role">
+            <lucide-icon [img]="Edit2" size="16"></lucide-icon>
+          </button>
+          <button class="icon-btn danger" (click)="deleteRole(role.id)" title="Delete Role">
+            <lucide-icon [img]="Trash2" size="16"></lucide-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="permissions-section">
+        <div class="section-header">
+          <h4>Permissions ({{role.permissions?.length || 0}})</h4>
+          <button class="btn btn-sm btn-outline" (click)="openPermissionModal(role)">
+            <lucide-icon [img]="PlusCircle" size="14"></lucide-icon> Add
+          </button>
+        </div>
+        
+        <div class="permissions-list" *ngIf="role.permissions && role.permissions.length > 0">
+          <div class="perm-badge" *ngFor="let perm of role.permissions">
+            <span class="module">{{ perm.module }}</span>
+            <span class="perm">{{ perm.permission }}</span>
+            <button class="remove-perm" (click)="removePermission(role.id, perm.id!)" title="Remove">
+              <lucide-icon [img]="X" size="12"></lucide-icon>
+            </button>
+          </div>
+        </div>
+        <div class="empty-permissions" *ngIf="!role.permissions || role.permissions.length === 0">
+          No permissions assigned. This role has no access.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Role Modal -->
+<div class="modal-overlay" *ngIf="showRoleModal" (click)="closeRoleModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingRole ? 'Edit Role' : 'Create New Role' }}</h2>
+      <button class="icon-btn" (click)="closeRoleModal()"><lucide-icon [img]="X" size="20"></lucide-icon></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Role Name *</label>
+        <input type="text" class="form-control" [(ngModel)]="roleForm.name" placeholder="e.g., Regional Manager" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" [(ngModel)]="roleForm.description" rows="3" placeholder="Describe the role..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeRoleModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveRole()">
+        <lucide-icon [img]="Save" size="16"></lucide-icon> Save Role
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Permission Modal -->
+<div class="modal-overlay" *ngIf="showPermissionModal" (click)="closePermissionModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Assign Permission to {{ activeRoleForPermission?.name }}</h2>
+      <button class="icon-btn" (click)="closePermissionModal()"><lucide-icon [img]="X" size="20"></lucide-icon></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Module *</label>
+        <select class="form-control" [(ngModel)]="permForm.module">
+          <option *ngFor="let m of modules" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Permission Level *</label>
+        <select class="form-control" [(ngModel)]="permForm.permission">
+          <option *ngFor="let p of permissions" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closePermissionModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="assignPermission()">
+        <lucide-icon [img]="PlusCircle" size="16"></lucide-icon> Assign
+      </button>
+    </div>
+  </div>
+</div>

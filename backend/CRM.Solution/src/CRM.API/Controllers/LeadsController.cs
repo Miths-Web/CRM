@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using CRM.API.Attributes;
 
 namespace CRM.API.Controllers
 {
@@ -26,6 +27,7 @@ namespace CRM.API.Controllers
         /// Issue #3 FIX: Permission matrix enforce kiya
         /// </summary>
         [HttpGet]
+        [HasPermission("Leads", "Read")]
         public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -51,6 +53,7 @@ namespace CRM.API.Controllers
         }
 
         [HttpGet("{id:guid}")]
+        [HasPermission("Leads", "Read")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var lead = await _leadService.GetLeadByIdAsync(id);
@@ -69,6 +72,7 @@ namespace CRM.API.Controllers
         }
 
         [HttpPost]
+        [HasPermission("Leads", "Create")]
         public async Task<IActionResult> Create([FromBody] CreateLeadDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -86,12 +90,13 @@ namespace CRM.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin,Manager,Sales Rep")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLeadDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             // Sales Rep sirf apna lead update kare
-            if (User.IsInRole("Sales Rep"))
+            if (User.IsInRole("Sales Rep") && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
             {
                 var existing = await _leadService.GetLeadByIdAsync(id);
                 if (existing == null) return NotFound();

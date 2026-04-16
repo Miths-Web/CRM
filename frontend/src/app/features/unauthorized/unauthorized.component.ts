@@ -12,11 +12,11 @@ import { LucideAngularModule, Lock } from 'lucide-angular';
         <div class="unauth-icon flex-center text-danger"><lucide-icon [img]="Lock" style="width:64px;height:64px;"></lucide-icon></div>
         <h1 class="unauth-title">Access Denied</h1>
         <p class="unauth-msg">
-          Aapke paas yeh page dekhne ki permission nahi hai.<br>
-          Please Admin se contact karein agar aapko access chahiye.
+          You don't have permission to view this page.<br>
+          Please contact your administrator for access.
         </p>
         <div class="unauth-actions">
-          <a routerLink="/dashboard" class="btn btn-primary">← Dashboard Par Jao</a>
+          <a routerLink="/dashboard" class="btn btn-primary">← Back to Dashboard</a>
         </div>
         <div class="unauth-code">403 — Forbidden</div>
       </div>

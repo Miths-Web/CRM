@@ -18,4 +18,6 @@ export class ReportService {
     getDashboard(): Observable<DashboardData> { return this.api.get<DashboardData>('reports/dashboard'); }
     getSalesReport(year?: number): Observable<SalesReport> { return this.api.get<SalesReport>('reports/sales', year ? { year } : {}); }
     getLeadReport(): Observable<any> { return this.api.get<any>('reports/leads'); }
+    getRecentActivity(): Observable<any[]> { return this.api.get<any[]>('reports/activity'); }
+    getNotifications(): Observable<any[]> { return this.api.get<any[]>('reports/notifications'); }
 }

@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DealService, Deal, DealStage, CreateDealDto } from './services/deal.service';
@@ -7,6 +7,8 @@ import { CustomerService } from '../../core/services/customer.service';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, AlertTriangle } from 'lucide-angular';
+
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-deals',
@@ -17,15 +19,31 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
       <div class="page-header">
         <div>
           <h2 class="page-title">Deals Pipeline</h2>
-          <p class="page-subtitle">Total pipeline: ₹{{totalPipeline() | number:'1.0-0'}}</p>
+          <p class="page-subtitle">Open Pipeline: ₹{{totalPipeline() | number:'1.0-0'}} &nbsp;|&nbsp; Total Won: ₹{{wonDealsValue() | number:'1.0-0'}}</p>
         </div>
         <div class="flex gap-2">
           <button class="btn btn-secondary btn-sm" (click)="viewMode.set(viewMode() === 'kanban' ? 'list' : 'kanban')">
             <lucide-icon [img]="viewMode() === 'kanban' ? List : Columns" class="btn-icon-sm"></lucide-icon>
             {{viewMode() === 'kanban' ? 'List' : 'Kanban'}}
           </button>
-          <button class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> New Deal</button>
+          <button *ngIf="canCreate" class="btn btn-primary" (click)="openCreateModal()"><lucide-icon [img]="Plus" class="btn-icon-sm"></lucide-icon> New Deal</button>
         </div>
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div class="status-tabs" *ngIf="!loading()">
+        <button class="status-tab" [class.active]="statusFilter() === 'All'" (click)="statusFilter.set('All')">
+          All <span class="tab-count">{{deals().length}}</span>
+        </button>
+        <button class="status-tab" [class.active]="statusFilter() === 'Open'" (click)="statusFilter.set('Open')">
+          Open <span class="tab-count">{{countByStatus('Open')}}</span>
+        </button>
+        <button class="status-tab won" [class.active]="statusFilter() === 'Won'" (click)="statusFilter.set('Won')">
+          Won <span class="tab-count">{{countByStatus('Won')}}</span>
+        </button>
+        <button class="status-tab lost" [class.active]="statusFilter() === 'Lost'" (click)="statusFilter.set('Lost')">
+          Lost <span class="tab-count">{{countByStatus('Lost')}}</span>
+        </button>
       </div>
 
       <!-- Loading -->
@@ -43,14 +61,14 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
           </div>
           <div class="kanban-cards">
             <div class="deal-card" *ngFor="let deal of getDealsForStage(stage.id)"
-                 (click)="openEditModal(deal)">
+                 (click)="canEdit ? openEditModal(deal) : null" [style.cursor]="canEdit ? 'pointer' : 'default'">
               <div class="deal-card-title">{{deal.title}}</div>
               <div class="deal-card-company" *ngIf="deal.companyName">{{deal.companyName}}</div>
               <div class="deal-card-footer">
                 <span class="deal-value">₹{{deal.value | number:'1.0-0'}}</span>
-                <span class="deal-prob">{{deal.probability}}%</span>
+                <span class="deal-status-badge" [class.won]="deal.status==='Won'" [class.lost]="deal.status==='Lost'" [class.open]="deal.status==='Open'">{{deal.status}}</span>
               </div>
-              <div class="deal-card-actions">
+              <div class="deal-card-actions" *ngIf="canDelete">
                 <button class="action-mini flex-center" (click)="$event.stopPropagation(); confirmDelete(deal)" title="Delete"><lucide-icon [img]="Trash2" class="w-3 h-3"></lucide-icon></button>
               </div>
             </div>
@@ -67,11 +85,11 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
           <thead>
             <tr>
               <th>Title</th><th>Company</th><th>Value</th><th>Stage</th>
-              <th>Probability</th><th>Status</th><th>Close Date</th><th></th>
+              <th>Probability</th><th>Status</th><th>Close Date</th><th *ngIf="canDelete"></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let deal of deals()" (click)="openEditModal(deal)" style="cursor:pointer">
+            <tr *ngFor="let deal of filteredDeals()" (click)="canEdit ? openEditModal(deal) : null" [style.cursor]="canEdit ? 'pointer' : 'default'">
               <td><strong>{{deal.title}}</strong></td>
               <td>{{deal.companyName || '—'}}</td>
               <td><strong style="color:var(--success)">₹{{deal.value | number:'1.0-0'}}</strong></td>
@@ -83,16 +101,16 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
                 </span>
               </td>
               <td>{{deal.expectedCloseDate | date:'dd MMM yyyy'}}</td>
-              <td (click)="$event.stopPropagation()">
+              <td (click)="$event.stopPropagation()" *ngIf="canDelete">
                 <button class="btn-icon flex-center" (click)="confirmDelete(deal)"><lucide-icon [img]="Trash2" class="w-4 h-4"></lucide-icon></button>
               </td>
             </tr>
           </tbody>
         </table>
-        <div class="empty-state" *ngIf="deals().length === 0">
+        <div class="empty-state" *ngIf="filteredDeals().length === 0">
           <div class="empty-icon text-muted"><lucide-icon [img]="CircleDollarSign"></lucide-icon></div>
-          <div class="empty-title">No deals yet</div>
-          <p class="empty-text">Create your first deal to start tracking your pipeline.</p>
+          <div class="empty-title">No deals found</div>
+          <p class="empty-text">No deals match the selected filter.</p>
         </div>
       </div>
 
@@ -173,9 +191,9 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
     </div>
   `,
   styles: [`
-    .kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; }
-    .kanban-col { min-width: 260px; background: var(--bg-secondary); border-radius: var(--radius-md);
-      border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 75vh; }
+    .kanban-board { display: flex; gap: 0.75rem; flex-wrap: wrap; padding-bottom: 1rem; }
+    .kanban-col { flex: 0 0 220px; max-width: 250px; min-width: 200px; background: var(--bg-secondary); border-radius: var(--radius-md);
+      border: 1px solid var(--border); display: flex; flex-direction: column; min-height: 250px; max-height: 75vh; }
     .kanban-col-header { padding: 0.875rem 1rem; border-bottom: 1px solid var(--border);
       display: flex; justify-content: space-between; align-items: center;
       background: var(--bg-card); border-radius: var(--radius-md) var(--radius-md) 0 0;
@@ -205,6 +223,26 @@ import { LucideAngularModule, CircleDollarSign, List, Columns, Plus, Trash2, Ale
     .btn-icon { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.5rem; cursor: pointer; &:hover { border-color: var(--danger); background: rgba(239,68,68,0.1); } }
     .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Status Filter Tabs */
+    .status-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .status-tab {
+      padding: 0.4rem 1rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.4rem;
+      &:hover { border-color: var(--accent); color: var(--accent); }
+      &.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+      &.won.active { background: var(--success); border-color: var(--success); }
+      &.lost.active { background: var(--danger); border-color: var(--danger); }
+    }
+    .tab-count { background: rgba(255,255,255,0.2); border-radius: 999px; padding: 0 6px; font-size: 0.7rem; }
+    .status-tab:not(.active) .tab-count { background: var(--bg-hover); color: var(--text-muted); }
+
+    /* Status badge on Kanban card */
+    .deal-status-badge { font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 6px; }
+    .deal-status-badge.open { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .deal-status-badge.won  { background: rgba(34,197,94,0.15);  color: #86efac; }
+    .deal-status-badge.lost { background: rgba(239,68,68,0.15);  color: #fca5a5; }
   `]
 })
 export class DealsComponent implements OnInit {
@@ -219,7 +257,12 @@ export class DealsComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   loading = signal(true);
+  statusFilter = signal<'All' | 'Open' | 'Won' | 'Lost'>('All');
   viewMode = signal<'kanban' | 'list'>('kanban');
+
+  canCreate = false;
+  canEdit = false;
+  canDelete = false;
 
   readonly CircleDollarSign = CircleDollarSign;
   readonly List = List;
@@ -234,8 +277,13 @@ export class DealsComponent implements OnInit {
     private dealService: DealService,
     private companyService: CompanyService,
     private customerService: CustomerService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) {
+    this.canCreate = this.authService.hasPermission('Deals', 'Create');
+    this.canEdit = this.authService.hasPermission('Deals', 'Update');
+    this.canDelete = this.authService.hasPermission('Deals', 'Delete');
+
     this.form = this.fb.group({
       title: ['', Validators.required], value: [0, Validators.required],
       probability: [50], stageId: [null], status: ['Open'],
@@ -253,20 +301,59 @@ export class DealsComponent implements OnInit {
     this.dealService.getPaged().subscribe({ next: d => { this.deals.set(d); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
-  getDealsForStage(stageId: number) { return this.deals().filter(d => d.stageId === stageId && d.status === 'Open'); }
+  getDealsForStage(stageId: number) {
+    const filter = this.statusFilter();
+    return this.deals().filter(d => d.stageId === stageId && (filter === 'All' || d.status === filter));
+  }
   getStageValue(id: number) { return this.getDealsForStage(id).reduce((s, d) => s + d.value, 0); }
   totalPipeline() { return this.deals().filter(d => d.status === 'Open').reduce((s, d) => s + d.value, 0); }
+  wonDealsValue() { return this.deals().filter(d => d.status === 'Won').reduce((s, d) => s + d.value, 0); }
+  totalAllDealsValue() { return this.deals().reduce((s, d) => s + d.value, 0); }
+  filteredDeals() {
+    const filter = this.statusFilter();
+    return filter === 'All' ? this.deals() : this.deals().filter(d => d.status === filter);
+  }
+
+  countByStatus(status: string) { return this.deals().filter(d => d.status === status).length; }
 
   openCreateModal() { this.editingId.set(null); this.form.reset({ status: 'Open', probability: 50 }); this.error.set(''); this.showModal.set(true); }
-  openEditModal(d: Deal) { this.editingId.set(d.id); this.form.patchValue(d); this.error.set(''); this.showModal.set(true); }
+  openEditModal(d: Deal) {
+    this.editingId.set(d.id);
+    // Convert numeric enum back to string for the form dropdown
+    const statusMap: Record<number, string> = { 1: 'Open', 2: 'Won', 3: 'Lost', 4: 'OnHold' };
+    const patchVal = { ...d, status: statusMap[d.status as any] || d.status };
+    this.form.patchValue(patchVal);
+    this.error.set('');
+    this.showModal.set(true);
+  }
   closeModal() { this.showModal.set(false); }
 
   save() {
     if (this.form.invalid) return;
     this.saving.set(true); this.error.set('');
-    const dto = this.form.value as CreateDealDto;
+    const raw = this.form.value;
+
+    // DealStatus enum: Open=1, Won=2, Lost=3, OnHold=4
+    const statusMap: Record<string, number> = { 'Open': 1, 'Won': 2, 'Lost': 3, 'OnHold': 4 };
+    const dto: CreateDealDto = {
+      ...raw,
+      status: typeof raw.status === 'string' ? (statusMap[raw.status] ?? 1) : raw.status,
+      stageId: raw.stageId ? Number(raw.stageId) : null,
+      probability: Number(raw.probability) || 0,
+      value: Number(raw.value) || 0,
+      expectedCloseDate: raw.expectedCloseDate || null
+    };
+
     const obs: any = this.editingId() ? this.dealService.update(this.editingId()!, dto) : this.dealService.create(dto);
-    obs.subscribe({ next: () => { this.saving.set(false); this.closeModal(); this.loadAll(); }, error: (e: any) => { this.saving.set(false); this.error.set(e.message); } });
+    obs.subscribe({
+      next: () => { this.saving.set(false); this.closeModal(); this.loadAll(); },
+      error: (e: any) => {
+        this.saving.set(false);
+        // Extract readable message from HttpErrorResponse
+        const msg = e?.error?.message || e?.error?.Message || e?.error?.title || e?.message || 'An error occurred.';
+        this.error.set(msg);
+      }
+    });
   }
 
   confirmDelete(d: Deal) { this.deletingDeal.set(d); this.showDeleteDialog.set(true); }

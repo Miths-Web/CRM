@@ -30,7 +30,8 @@ export class ApiService {
     }
 
     patch<T>(endpoint: string, body?: any): Observable<T> {
-        return this.http.patch<T>(`${this.baseUrl}/${endpoint}`, body ?? {});
+        const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+        return this.http.patch<T>(`${this.baseUrl}/${endpoint}`, body ?? {}, { headers });
     }
 
     delete<T>(endpoint: string): Observable<T> {

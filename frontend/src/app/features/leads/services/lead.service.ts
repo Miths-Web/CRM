@@ -23,4 +23,5 @@ export class LeadService {
     update(id: string, dto: CreateLeadDto): Observable<void> { return this.api.put<void>(`leads/${id}`, dto); }
     delete(id: string): Observable<void> { return this.api.delete<void>(`leads/${id}`); }
     convert(id: string): Observable<any> { return this.api.post<any>(`leads/${id}/convert`, {}); }
+    getUsersLookup(): Observable<{id: string, name: string}[]> { return this.api.get<{id: string, name: string}[]>('users/lookup'); }
 }

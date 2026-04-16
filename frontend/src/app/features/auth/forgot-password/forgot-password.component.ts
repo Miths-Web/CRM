@@ -1,4 +1,4 @@
-﻿import { Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -15,19 +15,7 @@ import { Router, RouterLink } from '@angular/router';
       <!-- Top Navbar & Logo -->
       <nav class="top-nav">
         <div class="logo-area" (click)="onLogoClick()" style="cursor: pointer;">
-          <div class="logo-icon-svg">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#6ca337" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="3" width="20" height="13" rx="2" ry="2"></rect>
-              <path d="M8 21h8"></path>
-              <path d="M12 16v5"></path>
-              <path d="M16 8h-4a2 2 0 0 0-2 2v2" stroke="#6ca337"></path>
-              <path d="M10 10a2 2 0 0 1 2 2v0" stroke="#6ca337"></path>
-            </svg>
-          </div>
-          <div class="brand-text">
-            <span class="dhwiti">DHWITI</span>
-            <span class="digital">DIGITAL SOLUTION</span>
-          </div>
+          <img src="logo.png" alt="Dhwiti Digital Solution" class="company-logo">
         </div>
       </nav>
 
@@ -104,10 +92,18 @@ import { Router, RouterLink } from '@angular/router';
       display: flex; align-items: center; justify-content: space-between;
       padding: 1.5rem 4rem; z-index: 10;
     }
-    .logo-area { display: flex; align-items: center; gap: 0.8rem; }
-    .brand-text { display: flex; flex-direction: column; justify-content: center; }
-    .dhwiti { font-size: 26px; font-weight: 800; color: #8dae86; line-height: 1; letter-spacing: 0.5px; }
-    .digital { font-size: 11px; font-weight: 800; color: #6da43f; line-height: 1; margin-top: 4px; letter-spacing: 0.8px; }
+    .company-logo {
+      height: 45px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .company-logo:hover {
+      transform: scale(1.05);
+    }
 
     .content-wrapper {
       position: relative; z-index: 1; display: flex; max-width: 1300px;

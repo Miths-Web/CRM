@@ -26,8 +26,8 @@ import { LucideAngularModule } from 'lucide-angular';
       <div class="content-wrapper">
         <!-- Left Side Text: (Moti heading aur description) -->
         <div class="left-content">
-          <h4 class="hero-title">Your great<br>Indian growth<br>story</h4>
-          <p class="hero-subtitle">Close more deals and grow your business in the<br>world's fastest growing economy, with the<br>magic of contextual AI and thoughtful UI.</p>
+          <h1 class="welcome-text">Welcome</h1>
+          <h2 class="admin-label">User!</h2>
         </div>
 
         <!-- Right Side Form: (Login Box / Card jahan data dala jayega) -->
@@ -183,14 +183,31 @@ import { LucideAngularModule } from 'lucide-angular';
       padding-right: 4rem;
     }
 
-    /* Moti Heading ka font aur colour style */
-    .hero-title {
-      font-size: 4.5rem;
+    .welcome-text {
+      font-size: 5rem;
+      font-weight: 850;
+      line-height: 1;
+      margin-bottom: 0;
+      color: #0056D2;
+      letter-spacing: -3px;
+    }
+
+    .admin-label {
+      font-size: 3.5rem;
       font-weight: 800;
-      color: #0056D2; 
-      line-height: 1.1;
-      letter-spacing: -1px;
-      margin-bottom: 2rem;
+      color: #1a1a1a;
+      margin-bottom: 1.5rem;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-left: 280px; /* Aligned under 'm' of 'Welcome' */
+    }
+
+    .welcome-msg {
+      font-size: 1.25rem;
+      line-height: 1.5;
+      color: #444;
+      font-weight: 500;
+      opacity: 0.8;
     }
 
     .right-content {

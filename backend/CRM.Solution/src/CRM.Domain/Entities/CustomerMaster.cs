@@ -6,7 +6,7 @@ namespace CRM.Domain.Entities
 {
     public class CustomerMaster : BaseEntity
     {
-        public Guid CompanyId { get; set; }
+        public Guid? CompanyId { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string? LastName { get; set; }
         public string? Email { get; set; }

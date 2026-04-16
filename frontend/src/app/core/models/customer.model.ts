@@ -11,6 +11,12 @@ export interface CustomerMaster {
     gstNo?: string;
     designation?: string;
     department?: string;
+    createdBy?: string;
+    createdByUserName?: string;
+    assignedToUserId?: string;
+    assignedToUserName?: string;
+    updatedBy?: string;
+    updatedByUserName?: string;
     createdDate: string;
     updatedDate: string;
     addresses?: CustomerAddress[];

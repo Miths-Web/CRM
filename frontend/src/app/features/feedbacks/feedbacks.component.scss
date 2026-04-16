@@ -1,0 +1,100 @@
+.feedbacks-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;
+  
+  .header-left {
+    display: flex; gap: 16px; align-items: center;
+    .icon-container {
+      width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;
+      &.bg-yellow { background-color: #f59e0b; }
+    }
+    h1 { margin: 0; font-size: 24px; font-weight: 600; color: #1e293b; }
+    p { margin: 4px 0 0 0; color: #64748b; font-size: 14px; }
+  }
+}
+
+.filter-group {
+  display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;
+  label { font-size: 14px; color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+  .form-control { border: none; outline: none; background: transparent; font-weight: 500; font-size: 14px; padding: 4px; }
+}
+
+.feedback-list {
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.feedback-card {
+  background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: transform 0.2s, box-shadow 0.2s;
+  
+  &.resolved { border-left-color: #10b981; opacity: 0.8; }
+  &.inreview { border-left-color: #f59e0b; }
+  
+  &:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;
+    
+    .customer-info {
+      display: flex; gap: 12px; align-items: center;
+      .avatar { width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #64748b; }
+      h4 { margin: 0; font-size: 16px; color: #0f172a; }
+      .date { font-size: 12px; color: #94a3b8; }
+    }
+
+    .badges {
+      display: flex; gap: 8px;
+      .badge {
+        padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;
+        &.new { background: #dbeafe; color: #2563eb; }
+        &.inreview { background: #fef3c7; color: #d97706; }
+        &.resolved { background: #d1fae5; color: #059669; }
+        &.category { background: #f1f5f9; color: #475569; }
+      }
+    }
+  }
+
+  .card-body {
+    margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0;
+    h5 { margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #334155; }
+    
+    .rating {
+      display: flex; gap: 2px; margin-bottom: 12px;
+      .star { color: #cbd5e1; }
+      .filled { color: #fbbf24; fill: #fbbf24; }
+    }
+    
+    .comments { margin: 0; font-size: 14px; color: #475569; font-style: italic; line-height: 1.5; }
+  }
+
+  .card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    
+    .assignment {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b;
+      .form-control-sm { padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; }
+    }
+
+    .actions { display: flex; gap: 8px; }
+  }
+}
+
+.btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s; border: none; border-radius: 6px; padding: 8px 16px; }
+.btn-sm { font-size: 13px; padding: 6px 12px; }
+.btn-primary { background: #3b82f6; color: white; &:hover { background: #2563eb; } }
+.btn-success { background: #10b981; color: white; &:hover { background: #059669; } }
+.btn-outline { background: white; color: #475569; border: 1px solid #cbd5e1; &:hover { background: #f8fafc; } }
+
+.loading-state, .empty-state {
+  text-align: center; padding: 48px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; color: #64748b;
+  .spin { animation: spin 1s linear infinite; display: inline-block; margin-bottom: 16px; }
+  h3 { margin: 16px 0 8px 0; color: #0f172a; font-size: 18px; }
+  p { margin: 0; font-size: 14px; }
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }

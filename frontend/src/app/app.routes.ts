@@ -32,6 +32,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent)
     },
 
+    // ─── Public Payment Gateway Page ──────────────────────────────────
+    {
+        path: 'pay/:id',
+        loadComponent: () => import('./features/pay/pay.component').then(m => m.PayComponent)
+    },
+
     // ─── Protected Shell (all logged-in users) ───────────────────────
     {
         path: '',
@@ -39,10 +45,10 @@ export const routes: Routes = [
         loadComponent: () => import('./layout/shell/shell.component').then(m => m.ShellComponent),
         children: [
 
-            // ── Dashboard — Admin, Manager, Sales Rep ──
+            // ── Dashboard — All logged-in users ──
             {
                 path: 'dashboard',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
             },
 
@@ -60,45 +66,45 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/customers/customers.component').then(m => m.CustomersComponent)
             },
 
-            // ── Products — Admin, Manager, Sales Rep ──
+            // ── Products — All logged-in users ──
             {
                 path: 'products',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/products/products.component').then(m => m.ProductsComponent)
             },
 
-            // ── Orders — Admin, Manager, Sales Rep ──
+            // ── Orders — All logged-in users ──
             {
                 path: 'orders',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent)
             },
 
-            // ── Invoices — Admin, Manager, Sales Rep ──
+            // ── Invoices — All logged-in users ──
             {
                 path: 'invoices',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/invoices/invoices.component').then(m => m.InvoicesComponent)
             },
 
-            // ── Payments — Admin, Manager, Sales Rep ──
+            // ── Payments — All logged-in users ──
             {
                 path: 'payments',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/payments/payments.component').then(m => m.PaymentsComponent)
             },
 
-            // ── Leads — Admin, Manager, Sales Rep ──
+            // ── Leads — All logged-in users ──
             {
                 path: 'leads',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/leads/leads.component').then(m => m.LeadsComponent)
             },
 
-            // ── Deals — Admin, Manager, Sales Rep ──
+            // ── Deals — All logged-in users ──
             {
                 path: 'deals',
-                canActivate: [roleGuard(SALES_ROLES)],
+                canActivate: [roleGuard(ALL_ROLES)],
                 loadComponent: () => import('./features/deals/deals.component').then(m => m.DealsComponent)
             },
 
@@ -158,11 +164,46 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent)
             },
 
+            // ── Tickets — All logged-in users ──
+            {
+                path: 'tickets',
+                canActivate: [roleGuard(ALL_ROLES)],
+                loadComponent: () => import('./features/tickets/tickets.component').then(m => m.TicketsComponent)
+            },
+
+            // ── Knowledge Base — All logged-in users ──
+            {
+                path: 'knowledge-base',
+                canActivate: [roleGuard(ALL_ROLES)],
+                loadComponent: () => import('./features/knowledge-base/knowledge-base.component').then(m => m.KnowledgeBaseComponent)
+            },
+
             // ── Settings — Admin ONLY ──
             {
                 path: 'settings',
                 canActivate: [roleGuard(ADMIN_ONLY)],
                 loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent)
+            },
+
+            // ── Roles & Permissions — Admin ONLY ──
+            {
+                path: 'settings/roles',
+                canActivate: [roleGuard(ADMIN_ONLY)],
+                loadComponent: () => import('./features/roles/roles.component').then(m => m.RolesComponent)
+            },
+
+            // ── My Profile — All logged-in users (each sees only their own) ──
+            {
+                path: 'profile',
+                canActivate: [roleGuard(ALL_ROLES)],
+                loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+            },
+
+            // ── Feedback — All logged-in users ──
+            {
+                path: 'feedbacks',
+                canActivate: [roleGuard(ALL_ROLES)],
+                loadComponent: () => import('./features/feedbacks/feedbacks.component').then(m => m.FeedbacksComponent)
             },
         ]
     },

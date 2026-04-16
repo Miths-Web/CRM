@@ -24,10 +24,7 @@ import { AuthService } from '../../../core/services/auth.service';
         <div class="setup-info">
           <h1 class="welcome-text">Hey</h1>
           <h2 class="admin-label">User!</h2>
-          <p class="welcome-msg">
-            Create an account to join the world's favorite CRM. <br>
-            Start growing your business today.
-          </p>
+
         </div>
 
         <!-- Wizard Card (Form wala safed dabba) -->

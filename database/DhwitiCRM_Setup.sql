@@ -791,6 +791,88 @@ INSERT INTO Settings (SettingKey, SettingValue, Description) VALUES
 ('gst_rate_default',  '18',                      'Default GST rate (%)'),
 ('max_file_size_mb',  '10',                      'Maximum file upload size in MB');
 GO
+-- ============================================================
+-- 18. ROLE PERMISSIONS
+-- ============================================================
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='RolePermissions' AND xtype='U')
+CREATE TABLE RolePermissions (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    RoleId      UNIQUEIDENTIFIER NOT NULL,
+    Module      NVARCHAR(100)    NOT NULL,
+    Permission  NVARCHAR(100)    NOT NULL,
+    CreatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_RolePermissions_Role FOREIGN KEY (RoleId) REFERENCES Roles(Id) ON DELETE CASCADE,
+    CONSTRAINT UQ_RolePermissions UNIQUE (RoleId, Module, Permission)
+);
+GO
+
+-- ============================================================
+-- 19. SUPPORT TICKETING
+-- ============================================================
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Tickets' AND xtype='U')
+CREATE TABLE Tickets (
+    Id               UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    TicketNumber     NVARCHAR(50)     NOT NULL UNIQUE,
+    Title            NVARCHAR(200)    NOT NULL,
+    Description      NVARCHAR(MAX)    NOT NULL,
+    Status           NVARCHAR(50)     NOT NULL DEFAULT 'Open',
+    Priority         NVARCHAR(50)     NOT NULL DEFAULT 'Medium',
+    CustomerId       UNIQUEIDENTIFIER NULL,
+    AssignedToUserId UNIQUEIDENTIFIER NULL,
+    CreatedByUserId  UNIQUEIDENTIFIER NOT NULL,
+    CreatedAt        DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    UpdatedAt        DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_Tickets_Customer FOREIGN KEY (CustomerId) REFERENCES CustomerMaster(Id),
+    CONSTRAINT FK_Tickets_AssignedTo FOREIGN KEY (AssignedToUserId) REFERENCES Users(Id),
+    CONSTRAINT FK_Tickets_CreatedBy FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id)
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='TicketComments' AND xtype='U')
+CREATE TABLE TicketComments (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    TicketId    UNIQUEIDENTIFIER NOT NULL,
+    UserId      UNIQUEIDENTIFIER NOT NULL,
+    CommentText NVARCHAR(MAX)    NOT NULL,
+    IsInternal  BIT              NOT NULL DEFAULT 0,
+    CreatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_TicketComments_Ticket FOREIGN KEY (TicketId) REFERENCES Tickets(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_TicketComments_User FOREIGN KEY (UserId) REFERENCES Users(Id)
+);
+GO
+
+-- ============================================================
+-- 20. KNOWLEDGE BASE
+-- ============================================================
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ArticleCategories' AND xtype='U')
+CREATE TABLE ArticleCategories (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    Name        NVARCHAR(100)    NOT NULL,
+    Description NVARCHAR(255)    NULL,
+    CreatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    UpdatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE()
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Articles' AND xtype='U')
+CREATE TABLE Articles (
+    Id          UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+    CategoryId  UNIQUEIDENTIFIER NOT NULL,
+    Title       NVARCHAR(200)    NOT NULL,
+    Content     NVARCHAR(MAX)    NOT NULL,
+    Tags        NVARCHAR(200)    NULL,
+    AuthorId    UNIQUEIDENTIFIER NOT NULL,
+    IsPublished BIT              NOT NULL DEFAULT 0,
+    ViewCount   INT              NOT NULL DEFAULT 0,
+    CreatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    UpdatedAt   DATETIME2        NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_Articles_Category FOREIGN KEY (CategoryId) REFERENCES ArticleCategories(Id),
+    CONSTRAINT FK_Articles_Author FOREIGN KEY (AuthorId) REFERENCES Users(Id)
+);
+GO
 
 -- ============================================================
 -- VERIFY — Show all tables

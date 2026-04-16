@@ -27,9 +27,7 @@ export class OrderService {
     }
 
     updateOrderStatus(id: string, status: string): Observable<void> {
-        return this.http.patch<void>(`${this.apiUrl}/${id}/status`, `"${status}"`, {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return this.http.put<void>(`${this.apiUrl}/${id}/status`, { status });
     }
 
     deleteOrder(id: string): Observable<void> {
